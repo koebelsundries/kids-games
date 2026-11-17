@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Koebel Kids Games</title>
+  <style>
+    :root {
+      --sky: #7ec8ff;
+      --sky-deep: #3d8fd4;
+      --sun: #ffe08a;
+      --ink: #1d3557;
+      --card: #fffdf8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 18%, #fff6c8 0 70px, transparent 72px),
+        radial-gradient(circle at 88% 8%, rgba(255, 255, 255, 0.7) 0 28px, transparent 30px),
+        linear-gradient(180deg, #b9e4ff 0%, var(--sky) 42%, #f7d9a0 100%);
+    }
+    main {
+      width: min(640px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 48px 0 64px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(2rem, 8vw, 3rem);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+    .lead {
+      margin: 0 0 28px;
+      font-size: 1.15rem;
+      font-weight: 600;
+    }
+    a.card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 18px;
+      text-decoration: none;
+      color: inherit;
+      background: var(--card);
+      border: 3px solid #1d3557;
+      border-radius: 22px;
+      box-shadow: 0 8px 0 #1d3557;
+    }
+    a.card:hover, a.card:focus-visible {
+      transform: translateY(-2px);
+      background: #fff7e4;
+      outline: none;
+    }
+    a.card:active { transform: translateY(2px); box-shadow: 0 4px 0 #1d3557; }
+    .mark {
+      flex: 0 0 auto;
+      width: 72px;
+      height: 72px;
+      display: grid;
+      place-items: center;
+      font-size: 40px;
+      background: linear-gradient(160deg, #ffb703, #fb8500);
+      border-radius: 18px;
+      border: 3px solid #1d3557;
+    }
+    h2 { margin: 0 0 6px; font-size: 1.45rem; }
+    p { margin: 0; line-height: 1.4; font-size: 1.05rem; }
+    footer {
+      margin-top: 28px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #16324f;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Koebel Kids Games</h1>
+    <p class="lead">Little games you can play right in the browser.</p>
+    <a class="card" href="emberwing/">
+      <span class="mark" aria-hidden="true">🐉</span>
+      <span>
+        <h2>Emberwing</h2>
+        <p>A dragon flying game with Little Rider, Normal, and Hard modes. Soar with your dragon and see how far you can go.</p>
+      </span>
+    </a>
+    <footer>Tap a game to play. More games will land here.</footer>
+  </main>
+</body>
+</html>
