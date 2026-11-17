@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Sparkegg" />
+  <meta name="theme-color" content="#1a1240" />
+  <meta name="description" content="Sparkegg - a two-player dragon-egg rally" />
+  <meta name="format-detection" content="telephone=no" />
+  <title>Sparkegg</title>
+  <link rel="icon" id="favicon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect fill='%231a1240' width='64' height='64' rx='14'/%3E%3Cellipse cx='32' cy='36' rx='14' ry='18' fill='%23ffe08a'/%3E%3Cellipse cx='32' cy='34' rx='11' ry='15' fill='%23fff4c8'/%3E%3Ccircle cx='28' cy='30' r='3' fill='%23c9b6ff'/%3E%3Ccircle cx='36' cy='38' r='2.4' fill='%23ff8a4a'/%3E%3Ccircle cx='31' cy='42' r='2' fill='%237b6cff'/%3E%3C/svg%3E" />
+  <link rel="manifest" id="manifestLink" />
+  <link rel="apple-touch-icon" id="appleIcon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect fill='%231a1240' width='64' height='64' rx='14'/%3E%3Cellipse cx='32' cy='36' rx='14' ry='18' fill='%23ffe08a'/%3E%3C/svg%3E" />
+  <style>
+    :root {
+      --safe-t: env(safe-area-inset-top, 0px);
+      --safe-b: env(safe-area-inset-bottom, 0px);
+      --safe-l: env(safe-area-inset-left, 0px);
+      --safe-r: env(safe-area-inset-right, 0px);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+    html, body {
+      margin: 0; padding: 0; width: 100%; height: 100%;
+      overflow: hidden; background: #120a2a;
+      position: fixed; inset: 0;
+      touch-action: none;
+      overscroll-behavior: none;
+      font-family: "Trebuchet MS", "Segoe UI", "Avenir Next", "Avenir", "Nunito", sans-serif;
+      color: #fff;
+    }
+    canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; }
+    #ui { position: fixed; inset: 0; z-index: 2; pointer-events: none; }
+    #ui button, #ui .hit { pointer-events: auto; }
+    button {
+      font-family: inherit; border: 0; cursor: pointer;
+      color: #fff; font-weight: 800; letter-spacing: 0.02em;
+    }
+    button:active { transform: scale(0.97); }
+    button:focus-visible { outline: 3px solid #ffe08a; outline-offset: 3px; }
+
+    .icon-btn {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: rgba(16, 8, 40, 0.55); border: 2px solid rgba(255,255,255,0.35);
+      font-size: 20px; display: grid; place-items: center; backdrop-filter: blur(6px);
+      box-shadow: 0 4px 12px rgba(0,0,0,.25);
+      flex: 0 0 auto;
+    }
+
+    #hud { position: absolute; inset: 0; display: none; }
+    .hud-end {
+      position: absolute; left: 0; right: 0;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 8px; padding: 8px 12px; pointer-events: none;
+    }
+    .hud-end button { pointer-events: auto; }
+    .hud-end.top { top: 0; transform: rotate(180deg); padding: 8px calc(12px + var(--safe-l)) calc(8px + var(--safe-t)) calc(12px + var(--safe-r)); }
+    .hud-end.bot { bottom: 0; padding-bottom: calc(8px + var(--safe-b)); padding-left: calc(12px + var(--safe-l)); padding-right: calc(12px + var(--safe-r)); }
+    .scoreblock { text-align: center; min-width: 110px; }
+    .scoreblock .team { font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.92; text-shadow: 0 1px 4px rgba(0,0,0,.55); }
+    .scoreblock .score { font-size: 34px; font-weight: 900; line-height: 1; text-shadow: 0 2px 0 #1a1240, 0 4px 10px rgba(0,0,0,.45); }
+    .scoreblock .sub { font-size: 11px; font-weight: 700; opacity: 0.9; text-shadow: 0 1px 4px rgba(0,0,0,.5); }
+    .hud-end.top .scoreblock .team { color: #c9b6ff; }
+    .hud-end.bot .scoreblock .team { color: #ffb070; }
+    .icon-row { display: flex; gap: 8px; }
+
+    #countUi, #flashUi {
+      position: absolute; inset: 0; display: none; pointer-events: none;
+    }
+    .banner {
+      position: absolute; left: 0; right: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-weight: 900; text-shadow: 0 3px 0 #1a1240, 0 8px 18px rgba(0,0,0,.5);
+      color: #fff4c8;
+    }
+    .banner.top { top: 18%; transform: rotate(180deg); }
+    .banner.bot { bottom: 18%; }
+    .banner .num { font-size: clamp(48px, 14vw, 84px); line-height: 1; }
+    .banner .msg { font-size: clamp(22px, 6vw, 34px); padding: 0 16px; text-align: center; }
+
+    #menu, #pause, #end {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      background: linear-gradient(to bottom, rgba(10,6,28,0.62), rgba(10,6,28,0.38), rgba(10,6,28,0.62));
+    }
+    #pause, #end { display: none; background: rgba(10,6,28,0.7); }
+    .midline {
+      flex: 0 0 auto; height: 28px;
+      display: flex; align-items: center; justify-content: center;
+      pointer-events: none;
+      color: #ffe08a; font-size: 16px;
+      text-shadow: 0 0 12px rgba(255, 200, 80, 0.8);
+    }
+    .midline::before, .midline::after {
+      content: ""; flex: 1; height: 2px; margin: 0 10px;
+      background: linear-gradient(90deg, transparent, rgba(255,224,138,0.7), transparent);
+    }
+    .half {
+      flex: 1; min-height: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+      gap: 6px; width: 100%;
+      overflow: hidden; touch-action: pan-y; pointer-events: auto;
+      padding: 8px 14px;
+    }
+    .half.top { transform: rotate(180deg); padding-bottom: calc(8px + var(--safe-t)); padding-left: calc(14px + var(--safe-r)); padding-right: calc(14px + var(--safe-l)); }
+    .half.bot { padding-bottom: calc(8px + var(--safe-b)); padding-left: calc(14px + var(--safe-l)); padding-right: calc(14px + var(--safe-r)); }
+    .panel {
+      position: relative;
+      width: min(420px, 100%);
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex; flex-direction: column; align-items: center; gap: 5px;
+      overflow: auto; touch-action: pan-y;
+    }
+    .panel-mute {
+      position: absolute; top: 0; right: 0;
+      width: 36px; height: 36px; font-size: 16px;
+      z-index: 2;
+    }
+    .title {
+      font-size: clamp(26px, 7.2vw, 40px); font-weight: 900; margin: 0;
+      color: #fff4c8; letter-spacing: 0.04em; line-height: 0.95;
+      text-shadow: 0 3px 0 #a65a14, 0 6px 0 #6a2e08, 0 10px 20px rgba(0,0,0,.45);
+    }
+    .tag { margin: 0; font-size: clamp(12px, 3.4vw, 15px); font-weight: 700; color: #eaf6ff; text-shadow: 0 2px 8px rgba(0,0,0,.6); text-align: center; }
+    .row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; width: 100%; align-items: center; }
+    .lab { font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.85; width: 100%; text-align: center; margin-top: 2px; text-shadow: 0 1px 4px rgba(0,0,0,.5); }
+    .row.lined { flex-wrap: nowrap; justify-content: center; gap: 6px; }
+    .lab-inline {
+      font-size: 10px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;
+      opacity: 0.85; text-shadow: 0 1px 4px rgba(0,0,0,.5);
+      min-width: 72px; text-align: right; flex: 0 0 auto; line-height: 1.1;
+    }
+    .chip, .mode-btn, .play-btn, .end-btn {
+      border-radius: 999px;
+      border: 2px solid rgba(255,255,255,0.35);
+      background: rgba(30, 16, 64, 0.7);
+      padding: 7px 12px; font-size: 13px;
+      box-shadow: 0 3px 0 rgba(0,0,0,.25);
+    }
+    .chip.on, .mode-btn.on {
+      background: linear-gradient(180deg, #7b6cff, #4a3ab8);
+      border-color: #fff4c8;
+      box-shadow: 0 0 0 2px rgba(255,224,138,0.25), 0 3px 0 rgba(0,0,0,.25);
+    }
+    .chip[data-opt="sizeTop"].on, .mode-btn[data-val="2p"].on { background: linear-gradient(180deg, #9aa8ff, #4a3ab8); }
+    .chip[data-opt="sizeBot"].on, .chip[data-opt="speed"].on { background: linear-gradient(180deg, #ffb070, #c44a12); }
+    .chip[data-opt="points"].on { background: linear-gradient(180deg, #6ad08a, #2f9a58); }
+    .mode-btn { border-radius: 14px; padding: 8px 14px; font-size: 14px; }
+    .play-btn, .end-btn {
+      border-radius: 16px; padding: 11px 18px; font-size: 18px; width: 100%;
+      margin-top: 4px;
+    }
+    .play-btn {
+      margin-top: auto;
+      position: sticky;
+      bottom: 0;
+      z-index: 2;
+      box-shadow: 0 -14px 18px rgba(10,6,28,0.8), 0 3px 0 rgba(0,0,0,.25);
+    }
+    .play-btn, .end-btn.primary { background: linear-gradient(180deg, #ffb347, #e07a20); color: #3a1a00; border-color: #fff3c4; }
+    .end-btn.alt { background: linear-gradient(180deg, #7b6cff, #4a3ab8); }
+    .how { margin: 2px 0 0; font-size: 11px; font-weight: 700; line-height: 1.35; color: #eaf6ff; text-align: center; text-shadow: 0 2px 8px rgba(0,0,0,.7); max-width: 360px; }
+    .big { font-size: clamp(26px, 8vw, 40px); margin: 0; color: #fff4c8; font-weight: 900; text-shadow: 0 3px 0 #6a2e08, 0 8px 18px rgba(0,0,0,.45); text-align: center; }
+    .result { font-size: 15px; font-weight: 800; margin: 2px 0 6px; text-shadow: 0 2px 8px rgba(0,0,0,.5); text-align: center; }
+    .result span { color: #ffe08a; font-size: 22px; }
+
+    @media (max-height: 900px) {
+      .title { font-size: clamp(24px, 7vw, 36px); }
+      .half { gap: 4px; }
+      .how { display: none; }
+      .lab { margin-top: 0; }
+      .chip, .mode-btn { padding: 6px 10px; font-size: 12px; }
+      .play-btn, .end-btn { padding: 10px 16px; font-size: 17px; }
+    }
+    @media (max-height: 560px) {
+      .title { font-size: 26px; }
+      .tag, .how { display: none; }
+      .lab { margin-top: 0; }
+      .chip, .mode-btn { padding: 5px 9px; font-size: 12px; }
+      .play-btn, .end-btn { padding: 8px 14px; font-size: 16px; }
+      .half { gap: 4px; }
+      .scoreblock .score { font-size: 26px; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <div id="ui">
+    <div id="hud">
+      <div class="hud-end top">
+        <div class="icon-row">
+          <button class="icon-btn" id="pauseTop" type="button" data-action="pause" aria-label="Pause">⏸</button>
+          <button class="icon-btn mute-btn" id="muteTop" type="button" data-action="mute" aria-label="Mute">🔊</button>
+        </div>
+        <div class="scoreblock">
+          <div class="team" id="nameTop">Starlings</div>
+          <div class="score" id="scoreTop">0</div>
+          <div class="sub" id="subTop">First to 7</div>
+        </div>
+      </div>
+      <div class="hud-end bot">
+        <div class="scoreblock">
+          <div class="team" id="nameBot">Embers</div>
+          <div class="score" id="scoreBot">0</div>
+          <div class="sub" id="subBot">First to 7</div>
+        </div>
+        <div class="icon-row">
+          <button class="icon-btn" id="pauseBot" type="button" data-action="pause" aria-label="Pause">⏸</button>
+          <button class="icon-btn mute-btn" id="muteBot" type="button" data-action="mute" aria-label="Mute">🔊</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="countUi" aria-hidden="true">
+      <div class="banner top"><div class="num" id="countTop">3</div></div>
+      <div class="banner bot"><div class="num" id="countBot">3</div></div>
+    </div>
+    <div id="flashUi" aria-hidden="true">
+      <div class="banner top"><div class="msg" id="flashTop"></div></div>
+      <div class="banner bot"><div class="msg" id="flashBot"></div></div>
+    </div>
+
+    <div id="menu"></div>
+    <div id="pause"></div>
+    <div id="end"></div>
+  </div>
+  <script>
+  (function () {
+    "use strict";
+
+    const STORAGE = { muted: "sparkegg-v1-muted", settings: "sparkegg-v1-settings" };
+    const TEAM = { top: "Starlings", bot: "Embers" };
+    const SIZES = { big: 0.44, normal: 0.28, small: 0.17 };
+    const SPEED = {
+      gentle: { base: 250, cap: 440, ramp: 1.04 },
+      normal: { base: 380, cap: 700, ramp: 1.055 },
+      fast:   { base: 520, cap: 920, ramp: 1.07 }
+    };
+    const AI = {
+      gentle: { speed: 250, err: 96, react: 0.42, look: 0.2, idle: true },
+      keen:   { speed: 500, err: 36, react: 0.16, look: 0.55, idle: false },
+      swift:  { speed: 880, err: 8,  react: 0.05, look: 0.9, idle: false }
+    };
+
+    function storeGet(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }
+    function storeSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+    function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+    function rand(a, b) { return a + Math.random() * (b - a); }
+    function choice(arr) { return arr[(Math.random() * arr.length) | 0]; }
+
+    const defaults = { players: "2p", ai: "keen", human: "bot", points: 7, speed: "normal", sizeTop: "normal", sizeBot: "normal" };
+    let settings = Object.assign({}, defaults);
+    try {
+      const saved = JSON.parse(storeGet(STORAGE.settings, "null"));
+      if (saved && typeof saved === "object") Object.assign(settings, saved);
+    } catch (e) {}
+    function saveSettings() { storeSet(STORAGE.settings, JSON.stringify(settings)); }
+
+    const canvas = document.getElementById("c");
+    const ctx = canvas.getContext("2d", { alpha: false });
+    const menuEl = document.getElementById("menu");
+    const pauseEl = document.getElementById("pause");
+    const endEl = document.getElementById("end");
+    const hudEl = document.getElementById("hud");
+    const countUi = document.getElementById("countUi");
+    const flashUi = document.getElementById("flashUi");
+    const muteBtns = function () { return Array.prototype.slice.call(document.querySelectorAll(".mute-btn")); };
+
+    let W = 0, H = 0, dpr = 1, safeT = 0, safeB = 0, safeL = 0, safeR = 0;
+    const court = { x: 0, y: 0, w: 0, h: 0 };
+    let state = "menu";
+    let paused = false;
+    let lastT = 0;
+    let shake = 0;
+    let flashTimer = 0;
+    let countTimer = 0;
+    let countVal = 0;
+    let scoreTop = 0, scoreBot = 0;
+    let rally = 0;
+    let serveDir = 1;
+    let scored = false;
+    let scoreHold = 0;
+    let winner = null;
+    let time = 0;
+
+    const ball = { x: 0, y: 0, vx: 0, vy: 0, r: 14, rot: 0, spin: 0, live: false, trail: [] };
+    const paddles = {
+      top: makePaddle("top"),
+      bot: makePaddle("bot")
+    };
+    function makePaddle(side) {
+      return { side: side, x: 0, y: 0, w: 120, h: 18, targetX: 0, vx: 0, touchId: null, flash: 0, aiT: 0, aiTarget: 0, aiBias: 0 };
+    }
+    const keys = { a: false, d: false, left: false, right: false };
+    const touchMap = new Map();
+    let particles = [];
+    let stars = [];
+    let motes = [];
+
+    /* ---------- Audio ---------- */
+    const SFX = {
+      ctx: null, master: null, musicTimer: null, muted: storeGet(STORAGE.muted, "0") === "1", step: 0,
+      init: function () {
+        if (this.ctx) return;
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        this.ctx = new AC();
+        this.master = this.ctx.createGain();
+        this.master.gain.value = this.muted ? 0 : 0.4;
+        this.master.connect(this.ctx.destination);
+      },
+      unlock: function () {
+        this.init();
+        if (!this.ctx) return;
+        if (this.ctx.state === "suspended") this.ctx.resume();
+      },
+      setMuted: function (m) {
+        this.muted = m;
+        storeSet(STORAGE.muted, m ? "1" : "0");
+        if (this.master) this.master.gain.value = m ? 0 : 0.4;
+        updateMuteUI();
+        if (!m) this.unlock();
+      },
+      envOsc: function (freq, dur, type, vol, startAt, slideTo) {
+        if (!this.ctx || this.muted) return;
+        const t = this.ctx.currentTime + (startAt || 0);
+        const o = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        o.type = type || "sine";
+        o.frequency.setValueAtTime(freq, t);
+        if (slideTo) o.frequency.exponentialRampToValueAtTime(Math.max(40, slideTo), t + dur);
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(vol, t + 0.015);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        o.connect(g); g.connect(this.master);
+        o.start(t); o.stop(t + dur + 0.02);
+      },
+      noise: function (dur, vol, freq) {
+        if (!this.ctx || this.muted) return;
+        const t = this.ctx.currentTime;
+        const n = this.ctx.createBuffer(1, Math.max(1, this.ctx.sampleRate * dur), this.ctx.sampleRate);
+        const d = n.getChannelData(0);
+        for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+        const src = this.ctx.createBufferSource();
+        src.buffer = n;
+        const f = this.ctx.createBiquadFilter();
+        f.type = "bandpass"; f.frequency.value = freq || 800; f.Q.value = 0.6;
+        const g = this.ctx.createGain();
+        g.gain.setValueAtTime(vol, t);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        src.connect(f); f.connect(g); g.connect(this.master);
+        src.start(t); src.stop(t + dur + 0.02);
+      },
+      hit: function (n) {
+        const p = 420 + Math.min(12, n) * 28;
+        this.envOsc(p, 0.08, "sine", 0.2);
+        this.envOsc(p * 1.5, 0.1, "triangle", 0.1, 0.02);
+      },
+      wall: function () { this.envOsc(240, 0.07, "triangle", 0.1); this.noise(0.06, 0.1, 900); },
+      score: function () { this.envOsc(392, 0.14, "triangle", 0.16); this.envOsc(523, 0.18, "sine", 0.14, 0.1); },
+      win: function () {
+        this.envOsc(523, 0.12, "triangle", 0.18);
+        this.envOsc(659, 0.12, "triangle", 0.16, 0.12);
+        this.envOsc(784, 0.14, "triangle", 0.16, 0.24);
+        this.envOsc(1046, 0.28, "sine", 0.18, 0.36);
+      },
+      tick: function () { this.envOsc(660, 0.08, "sine", 0.12); },
+      serve: function () { this.envOsc(200, 0.16, "sine", 0.12, 0, 520); },
+      start: function () { this.envOsc(523, 0.1, "triangle", 0.16); this.envOsc(784, 0.18, "triangle", 0.16, 0.1); },
+      tickMusic: function () {
+        if (!this.ctx || this.muted || state !== "play" || paused) return;
+        const scale = [392, 493.88, 587.33, 659.25, 587.33, 523.25, 493.88, 392];
+        const f = scale[this.step % scale.length];
+        this.step++;
+        this.envOsc(f, 0.32, "sine", 0.035);
+        this.envOsc(f / 2, 0.4, "triangle", 0.025);
+      }
+    };
+
+    function updateMuteUI() {
+      const label = SFX.muted ? "🔇" : "🔊";
+      muteBtns().forEach(function (b) { b.textContent = label; b.setAttribute("aria-label", SFX.muted ? "Unmute" : "Mute"); });
+    }
+    function startMusic() {
+      stopMusic();
+      SFX.step = 0;
+      SFX.musicTimer = setInterval(function () { SFX.tickMusic(); }, 480);
+    }
+    function stopMusic() {
+      if (SFX.musicTimer) { clearInterval(SFX.musicTimer); SFX.musicTimer = null; }
+    }
+
+    /* ---------- Icons / manifest ---------- */
+    function bakeIcon() {
+      const s = 192;
+      const ic = document.createElement("canvas");
+      ic.width = s; ic.height = s;
+      const g = ic.getContext("2d");
+      const grd = g.createLinearGradient(0, 0, 0, s);
+      grd.addColorStop(0, "#4a3ab8");
+      grd.addColorStop(1, "#1a1240");
+      g.fillStyle = grd;
+      g.fillRect(0, 0, s, s);
+      g.save();
+      g.translate(s / 2, s / 2 + 6);
+      drawEgg(g, 0, 0, 38, 50, 0, 1);
+      g.restore();
+      const url = ic.toDataURL("image/png");
+      document.getElementById("appleIcon").href = url;
+      const fav = document.getElementById("favicon");
+      if (fav) fav.href = url;
+      const manifest = {
+        name: "Sparkegg",
+        short_name: "Sparkegg",
+        display: "standalone",
+        orientation: "any",
+        start_url: ".",
+        scope: ".",
+        background_color: "#1a1240",
+        theme_color: "#1a1240",
+        icons: [{ src: url, sizes: "192x192", type: "image/png", purpose: "any" }]
+      };
+      const blob = new Blob([JSON.stringify(manifest)], { type: "application/json" });
+      document.getElementById("manifestLink").href = URL.createObjectURL(blob);
+    }
+
+    /* ---------- Resize ---------- */
+    function readSafe() {
+      const st = getComputedStyle(document.documentElement);
+      function px(name) { return parseFloat(st.getPropertyValue(name)) || 0; }
+      safeT = px("--safe-t"); safeB = px("--safe-b"); safeL = px("--safe-l"); safeR = px("--safe-r");
+    }
+    function resize() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = Math.max(1, window.innerWidth);
+      H = Math.max(1, window.innerHeight);
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+      canvas.style.width = W + "px";
+      canvas.style.height = H + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      readSafe();
+      const marginX = 10 + Math.max(safeL, safeR);
+      court.w = Math.min(W - marginX * 2, Math.round(Math.max(320, H * 0.7)));
+      court.x = (W - court.w) / 2;
+      court.y = 0;
+      court.h = H;
+      ball.r = clamp(Math.round(Math.min(court.w, H) * 0.028), 12, 18);
+      layoutPaddles(false);
+      if (!stars.length) bootDecor();
+    }
+    function paddleWidth(side) {
+      const key = side === "top" ? settings.sizeTop : settings.sizeBot;
+      const frac = SIZES[key] || SIZES.normal;
+      return clamp(court.w * frac, 86, 280);
+    }
+    function layoutPaddles(resetX) {
+      const inset = 62 + 8;
+      paddles.top.y = Math.max(safeT + inset, 70);
+      paddles.bot.y = Math.min(H - safeB - inset, H - 70);
+      paddles.top.h = paddles.bot.h = clamp(Math.round(H * 0.022), 16, 22);
+      paddles.top.w = paddleWidth("top");
+      paddles.bot.w = paddleWidth("bot");
+      ["top", "bot"].forEach(function (side) {
+        const p = paddles[side];
+        if (resetX || !p.x) { p.x = court.x + court.w / 2; p.targetX = p.x; }
+        const minX = court.x + p.w / 2;
+        const maxX = court.x + court.w - p.w / 2;
+        p.x = clamp(p.x, minX, maxX);
+        p.targetX = clamp(p.targetX, minX, maxX);
+      });
+    }
+    window.addEventListener("resize", resize);
+    window.addEventListener("orientationchange", function () { setTimeout(resize, 120); });
+
+    function bootDecor() {
+      stars = [];
+      for (let i = 0; i < 80; i++) {
+        stars.push({ x: Math.random(), y: Math.random(), r: rand(0.6, 1.8), ph: Math.random() * Math.PI * 2, sp: rand(0.6, 1.8) });
+      }
+      motes = [];
+      for (let i = 0; i < 18; i++) {
+        motes.push({ x: Math.random(), y: Math.random(), s: rand(1.2, 2.6), ph: Math.random() * 6, v: rand(0.01, 0.03) });
+      }
+    }
+
+    /* ---------- Input ---------- */
+    function isUiButton(el) { return el && el.closest && el.closest("button"); }
+    function halfOf(y) { return y < H / 2 ? "top" : "bot"; }
+    function sideTaken(side) {
+      let taken = false;
+      touchMap.forEach(function (v) { if (v.side === side) taken = true; });
+      return taken;
+    }
+    function assignTouch(id, x, y) {
+      if (state !== "play" || paused) return;
+      const side = halfOf(y);
+      if (sideTaken(side)) return;
+      touchMap.set(id, { side: side, x: x, y: y });
+      paddles[side].touchId = id;
+      paddles[side].targetX = x;
+    }
+    function moveTouch(id, x, y) {
+      const rec = touchMap.get(id);
+      if (!rec) return;
+      rec.x = x; rec.y = y;
+      paddles[rec.side].targetX = x;
+    }
+    function endTouch(id) {
+      const rec = touchMap.get(id);
+      if (!rec) return;
+      touchMap.delete(id);
+      if (paddles[rec.side].touchId === id) paddles[rec.side].touchId = null;
+    }
+
+    function onTouchStart(e) {
+      if (isUiButton(e.target)) return;
+      e.preventDefault();
+      SFX.unlock();
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const t = e.changedTouches[i];
+        assignTouch(t.identifier, t.clientX, t.clientY);
+      }
+    }
+    function onTouchMove(e) {
+      if (isUiButton(e.target) && state !== "play") return;
+      e.preventDefault();
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const t = e.changedTouches[i];
+        moveTouch(t.identifier, t.clientX, t.clientY);
+      }
+    }
+    function onTouchEnd(e) {
+      for (let i = 0; i < e.changedTouches.length; i++) endTouch(e.changedTouches[i].identifier);
+    }
+    document.addEventListener("touchstart", onTouchStart, { passive: false });
+    document.addEventListener("touchmove", onTouchMove, { passive: false });
+    document.addEventListener("touchend", onTouchEnd, { passive: false });
+    document.addEventListener("touchcancel", onTouchEnd, { passive: false });
+
+    let mouseOn = false, mouseId = "mouse";
+    window.addEventListener("mousedown", function (e) {
+      if (e.button !== 0) return;
+      if (isUiButton(e.target)) return;
+      if (state !== "play" || paused) return;
+      mouseOn = true;
+      assignTouch(mouseId, e.clientX, e.clientY);
+    });
+    window.addEventListener("mousemove", function (e) {
+      if (!mouseOn) return;
+      moveTouch(mouseId, e.clientX, e.clientY);
+    });
+    window.addEventListener("mouseup", function () {
+      if (!mouseOn) return;
+      mouseOn = false;
+      endTouch(mouseId);
+    });
+
+    window.addEventListener("keydown", function (e) {
+      if (e.code === "ArrowLeft" || e.code === "ArrowRight" || e.code === "KeyA" || e.code === "KeyD" || e.code === "Space") e.preventDefault();
+      if (e.code === "KeyA") keys.a = true;
+      if (e.code === "KeyD") keys.d = true;
+      if (e.code === "ArrowLeft") keys.left = true;
+      if (e.code === "ArrowRight") keys.right = true;
+      if (e.code === "KeyM") SFX.setMuted(!SFX.muted);
+      if ((e.code === "KeyP" || e.code === "Escape") && state === "play") togglePause();
+    });
+    window.addEventListener("keyup", function (e) {
+      if (e.code === "KeyA") keys.a = false;
+      if (e.code === "KeyD") keys.d = false;
+      if (e.code === "ArrowLeft") keys.left = false;
+      if (e.code === "ArrowRight") keys.right = false;
+    });
+
+    document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
+    document.addEventListener("gesturechange", function (e) { e.preventDefault(); });
+    document.addEventListener("dblclick", function (e) { e.preventDefault(); }, { passive: false });
+    document.addEventListener("contextmenu", function (e) { if (state === "play") e.preventDefault(); });
+    let lastTouchEnd = 0;
+    document.addEventListener("touchend", function (e) {
+      const now = Date.now();
+      if (now - lastTouchEnd < 300) e.preventDefault();
+      lastTouchEnd = now;
+    }, { passive: false });
+
+    /* ---------- Game flow ---------- */
+    function teamName(side) {
+      if (settings.players === "1p") {
+        if (side === settings.human) return "You";
+        return "Nest Keeper";
+      }
+      return TEAM[side];
+    }
+
+    function resetBall(hold) {
+      ball.x = court.x + court.w / 2;
+      ball.y = H / 2;
+      ball.vx = 0; ball.vy = 0;
+      ball.spin = 0; ball.rot = 0;
+      ball.live = false;
+      ball.trail = [];
+      scored = false;
+      if (hold) {
+        countVal = 3;
+        countTimer = 1;
+        countUi.style.display = "block";
+        setCountText("3");
+      }
+    }
+    function setCountText(v) {
+      document.getElementById("countTop").textContent = v;
+      document.getElementById("countBot").textContent = v;
+    }
+    function launchBall() {
+      const spd = SPEED[settings.speed].base;
+      const ang = rand(-0.38, 0.38);
+      const dir = serveDir;
+      ball.vx = Math.sin(ang) * spd;
+      ball.vy = Math.cos(ang) * spd * dir;
+      ball.live = true;
+      ball.spin = ang * 4;
+      countUi.style.display = "none";
+      SFX.serve();
+    }
+    function startMatch() {
+      saveSettings();
+      scoreTop = 0; scoreBot = 0;
+      rally = 0;
+      winner = null;
+      paused = false;
+      serveDir = Math.random() < 0.5 ? 1 : -1;
+      state = "play";
+      layoutPaddles(true);
+      particles = [];
+      resetBall(true);
+      showPlayUI();
+      SFX.start();
+      startMusic();
+      refreshHud();
+    }
+    function rematch() {
+      endEl.style.display = "none";
+      pauseEl.style.display = "none";
+      startMatch();
+    }
+    function goMenu() {
+      state = "menu";
+      paused = false;
+      winner = null;
+      stopMusic();
+      hudEl.style.display = "none";
+      countUi.style.display = "none";
+      flashUi.style.display = "none";
+      pauseEl.style.display = "none";
+      endEl.style.display = "none";
+      menuEl.style.display = "flex";
+      resetBall(false);
+      ball.y = H / 2;
+      layoutPaddles(true);
+      renderMenus();
+      updateMuteUI();
+    }
+    function togglePause() {
+      if (state !== "play" || winner) return;
+      paused = !paused;
+      if (paused) {
+        stopMusic();
+        pauseEl.style.display = "flex";
+        countUi.style.display = "none";
+        renderPause();
+        updateMuteUI();
+      } else {
+        pauseEl.style.display = "none";
+        startMusic();
+        if (!ball.live && !scored) {
+          countUi.style.display = "block";
+        }
+      }
+    }
+    function showPlayUI() {
+      menuEl.style.display = "none";
+      pauseEl.style.display = "none";
+      endEl.style.display = "none";
+      hudEl.style.display = "block";
+      updateMuteUI();
+    }
+    function refreshHud() {
+      document.getElementById("scoreTop").textContent = String(scoreTop);
+      document.getElementById("scoreBot").textContent = String(scoreBot);
+      document.getElementById("nameTop").textContent = teamName("top");
+      document.getElementById("nameBot").textContent = teamName("bot");
+      const sub = "Rally " + rally + " · First to " + settings.points;
+      document.getElementById("subTop").textContent = sub;
+      document.getElementById("subBot").textContent = sub;
+    }
+    function showFlash(text) {
+      document.getElementById("flashTop").textContent = text;
+      document.getElementById("flashBot").textContent = text;
+      flashUi.style.display = "block";
+      flashTimer = 0.85;
+    }
+    function pointTo(side) {
+      if (scored) return;
+      scored = true;
+      ball.live = false;
+      scoreHold = 0.9;
+      if (side === "top") scoreTop++; else scoreBot++;
+      rally = 0;
+      shake = 7;
+      burst(ball.x, ball.y, side === "top" ? "#c9b6ff" : "#ffb070", 28);
+      SFX.score();
+      showFlash(teamName(side) + " score!");
+      refreshHud();
+      const need = settings.points | 0;
+      if (scoreTop >= need || scoreBot >= need) {
+        winner = scoreTop >= need ? "top" : "bot";
+        scoreHold = 0.55;
+      }
+      serveDir = side === "top" ? 1 : -1;
+    }
+    function finishWin() {
+      state = "win";
+      paused = false;
+      stopMusic();
+      countUi.style.display = "none";
+      flashUi.style.display = "none";
+      pauseEl.style.display = "none";
+      hudEl.style.display = "none";
+      endEl.style.display = "flex";
+      SFX.win();
+      renderEnd();
+      updateMuteUI();
+    }
+
+    /* ---------- Physics ---------- */
+    function isAI(side) {
+      return settings.players === "1p" && settings.human !== side;
+    }
+    function predictX(paddleY, quality) {
+      let x = ball.x, y = ball.y, vx = ball.vx, vy = ball.vy;
+      const left = court.x + ball.r, right = court.x + court.w - ball.r;
+      for (let i = 0; i < 240; i++) {
+        const dt = 1 / 60;
+        x += vx * dt; y += vy * dt;
+        if (x < left) { x = left + (left - x); vx = Math.abs(vx); }
+        if (x > right) { x = right - (x - right); vx = -Math.abs(vx); }
+        if ((vy < 0 && y <= paddleY) || (vy > 0 && y >= paddleY)) break;
+      }
+      return x * quality + ball.x * (1 - quality);
+    }
+    function updateAI(p, dt) {
+      const cfg = AI[settings.ai] || AI.keen;
+      const coming = p.side === "top" ? ball.vy < 0 : ball.vy > 0;
+      p.aiT -= dt;
+      if (p.aiT <= 0) {
+        p.aiT = cfg.react * rand(0.85, 1.2);
+        if (Math.random() < 0.35) p.aiBias = rand(-1, 1) * cfg.err;
+        if (!ball.live || (cfg.idle && !coming)) {
+          p.aiTarget = court.x + court.w / 2 + rand(-30, 30);
+        } else {
+          p.aiTarget = predictX(p.y, coming ? cfg.look : cfg.look * 0.3) + p.aiBias;
+        }
+      }
+      const dx = p.aiTarget - p.x;
+      const step = cfg.speed * dt;
+      if (Math.abs(dx) > 5) p.targetX = p.x + clamp(dx, -step, step);
+    }
+    function updatePaddle(p, dt) {
+      if (isAI(p.side)) updateAI(p, dt);
+      else {
+        let kx = 0;
+        if (p.side === "top") { if (keys.a) kx -= 1; if (keys.d) kx += 1; }
+        else { if (keys.left) kx -= 1; if (keys.right) kx += 1; }
+        if (kx) p.targetX = p.x + kx * 900 * dt * 3;
+      }
+      const minX = court.x + p.w / 2;
+      const maxX = court.x + court.w - p.w / 2;
+      p.targetX = clamp(p.targetX, minX, maxX);
+      const prev = p.x;
+      const k = p.touchId != null ? 0.7 : 0.5;
+      p.x += (p.targetX - p.x) * Math.min(1, k * dt * 60);
+      p.x = clamp(p.x, minX, maxX);
+      p.vx = (p.x - prev) / Math.max(dt, 1 / 120);
+      if (p.flash > 0) p.flash = Math.max(0, p.flash - dt * 4);
+    }
+    function bounceOff(p) {
+      const offset = clamp((ball.x - p.x) / (p.w / 2), -1, 1);
+      rally += 1;
+      const sp = SPEED[settings.speed];
+      let spd = Math.hypot(ball.vx, ball.vy) * sp.ramp;
+      spd = clamp(spd, sp.base, sp.cap);
+      let ang = offset * 0.72 + clamp(p.vx / 1600, -0.28, 0.28);
+      ang = clamp(ang, -0.95, 0.95);
+      const dir = p.side === "top" ? 1 : -1;
+      ball.vx = Math.sin(ang) * spd;
+      ball.vy = Math.cos(ang) * Math.max(0.42, Math.abs(Math.cos(ang))) * spd * dir;
+      const minVy = spd * 0.42;
+      if (Math.abs(ball.vy) < minVy) ball.vy = minVy * dir;
+      if (p.side === "top") ball.y = p.y + p.h / 2 + ball.r + 0.5;
+      else ball.y = p.y - p.h / 2 - ball.r - 0.5;
+      ball.spin = offset * 10 + p.vx * 0.012;
+      ball.hitCool = 0.1;
+      p.flash = 1;
+      burst(ball.x, ball.y, p.side === "top" ? "#c9b6ff" : "#ffb070", 16);
+      SFX.hit(rally);
+      refreshHud();
+    }
+    function collidePaddle(p) {
+      if (!ball.live || ball.hitCool > 0) return;
+      const coming = p.side === "top" ? ball.vy < 0 : ball.vy > 0;
+      if (!coming) return;
+      const half = p.w / 2 + 2;
+      const hx = p.h / 2 + 2;
+      if (ball.x + ball.r < p.x - half || ball.x - ball.r > p.x + half) return;
+      if (ball.y + ball.r < p.y - hx || ball.y - ball.r > p.y + hx) return;
+      bounceOff(p);
+    }
+    function burst(x, y, color, n) {
+      const count = n || 14;
+      for (let i = 0; i < count; i++) {
+        const a = rand(0, Math.PI * 2);
+        const s = rand(40, 260);
+        particles.push({
+          x: x, y: y,
+          vx: Math.cos(a) * s, vy: Math.sin(a) * s,
+          life: rand(0.35, 0.7), max: 0, r: rand(1.4, 3.4),
+          color: Math.random() < 0.4 ? "#fff4c8" : color
+        });
+        particles[particles.length - 1].max = particles[particles.length - 1].life;
+      }
+      if (particles.length > 120) particles.splice(0, particles.length - 120);
+    }
+    function updateParticles(dt) {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.life -= dt;
+        if (p.life <= 0) { particles.splice(i, 1); continue; }
+        p.x += p.vx * dt; p.y += p.vy * dt;
+        p.vy += 40 * dt;
+        p.vx *= 0.98;
+      }
+    }
+    function update(dt) {
+      time += dt;
+      if (shake > 0) shake = Math.max(0, shake - dt * 18);
+      if (flashTimer > 0) {
+        flashTimer -= dt;
+        if (flashTimer <= 0) flashUi.style.display = "none";
+      }
+      updateParticles(dt);
+      updatePaddle(paddles.top, dt);
+      updatePaddle(paddles.bot, dt);
+
+      if (scored) {
+        scoreHold -= dt;
+        if (scoreHold <= 0) {
+          if (winner) finishWin();
+          else resetBall(true);
+        }
+        return;
+      }
+      if (!ball.live) {
+        ball.x = court.x + court.w / 2;
+        ball.y = H / 2 + Math.sin(time * 3) * 4;
+        if (countTimer > 0) {
+          countTimer -= dt;
+          if (countTimer <= 0) {
+            countVal -= 1;
+            if (countVal <= 0) {
+              setCountText("Go!");
+              launchBall();
+            } else {
+              setCountText(String(countVal));
+              countTimer = 0.7;
+              SFX.tick();
+            }
+          }
+        }
+        return;
+      }
+      if (ball.hitCool > 0) ball.hitCool -= dt;
+      ball.x += ball.vx * dt;
+      ball.y += ball.vy * dt;
+      ball.rot += (ball.spin + ball.vx * 0.02) * dt;
+      const left = court.x + ball.r, right = court.x + court.w - ball.r;
+      if (ball.x < left) { ball.x = left; ball.vx = Math.abs(ball.vx); SFX.wall(); burst(ball.x, ball.y, "#fff4c8", 8); }
+      if (ball.x > right) { ball.x = right; ball.vx = -Math.abs(ball.vx); SFX.wall(); burst(ball.x, ball.y, "#fff4c8", 8); }
+      collidePaddle(paddles.top);
+      collidePaddle(paddles.bot);
+      ball.trail.push({ x: ball.x, y: ball.y, r: ball.rot });
+      if (ball.trail.length > 14) ball.trail.shift();
+      if (ball.y < paddles.top.y - 28) pointTo("bot");
+      else if (ball.y > paddles.bot.y + 28) pointTo("top");
+    }
+    function updateIdle(dt) {
+      time += dt;
+      if (shake > 0) shake = Math.max(0, shake - dt * 18);
+      updateParticles(dt);
+      if (state === "menu") {
+        ball.x = court.x + court.w / 2 + Math.sin(time * 0.7) * court.w * 0.12;
+        ball.y = H / 2 + Math.cos(time * 0.9) * 16;
+        ball.rot += dt * 1.2;
+        ball.trail.push({ x: ball.x, y: ball.y, r: ball.rot });
+        if (ball.trail.length > 14) ball.trail.shift();
+      }
+    }
+
+    /* ---------- Draw ---------- */
+    function roundRect(g, x, y, w, h, r) {
+      const rr = Math.min(r, w / 2, h / 2);
+      g.beginPath();
+      g.moveTo(x + rr, y);
+      g.arcTo(x + w, y, x + w, y + h, rr);
+      g.arcTo(x + w, y + h, x, y + h, rr);
+      g.arcTo(x, y + h, x, y, rr);
+      g.arcTo(x, y, x + w, y, rr);
+      g.closePath();
+    }
+    function drawEgg(g, x, y, rx, ry, rot, glow) {
+      g.save();
+      g.translate(x, y);
+      g.rotate(rot || 0);
+      if (glow) {
+        const light = g.createRadialGradient(0, 0, 2, 0, 0, Math.max(rx, ry) * 2.2);
+        light.addColorStop(0, "rgba(255,240,180,0.7)");
+        light.addColorStop(0.4, "rgba(255,180,80,0.22)");
+        light.addColorStop(1, "rgba(255,180,80,0)");
+        g.fillStyle = light;
+        g.beginPath();
+        g.arc(0, 0, Math.max(rx, ry) * 2.2, 0, Math.PI * 2);
+        g.fill();
+      }
+      g.beginPath();
+      g.moveTo(0, -ry);
+      g.bezierCurveTo(rx * 0.95, -ry * 0.95, rx, -ry * 0.15, rx, ry * 0.28);
+      g.bezierCurveTo(rx, ry * 0.95, rx * 0.55, ry, 0, ry);
+      g.bezierCurveTo(-rx * 0.55, ry, -rx, ry * 0.95, -rx, ry * 0.28);
+      g.bezierCurveTo(-rx, -ry * 0.15, -rx * 0.95, -ry * 0.95, 0, -ry);
+      g.closePath();
+      const shell = g.createLinearGradient(-rx, -ry, rx, ry);
+      shell.addColorStop(0, "#fffaf0");
+      shell.addColorStop(0.45, "#ffe08a");
+      shell.addColorStop(1, "#e09a3a");
+      g.fillStyle = shell;
+      g.fill();
+      g.strokeStyle = "rgba(120, 60, 10, 0.35)";
+      g.lineWidth = 1.5;
+      g.stroke();
+      g.fillStyle = "rgba(255,255,255,0.55)";
+      g.beginPath();
+      g.ellipse(-rx * 0.25, -ry * 0.28, rx * 0.32, ry * 0.22, -0.4, 0, Math.PI * 2);
+      g.fill();
+      const specks = [
+        [-0.2, 0.15, 0.16, "#7b6cff"],
+        [0.28, 0.05, 0.12, "#ff8a4a"],
+        [0.05, 0.42, 0.1, "#4a3ab8"],
+        [-0.35, 0.4, 0.09, "#c9b6ff"],
+        [0.32, 0.38, 0.08, "#e07a20"]
+      ];
+      for (let i = 0; i < specks.length; i++) {
+        const s = specks[i];
+        g.fillStyle = s[3];
+        g.beginPath();
+        g.ellipse(s[0] * rx, s[1] * ry, s[2] * rx, s[2] * ry * 0.85, 0.3, 0, Math.PI * 2);
+        g.fill();
+      }
+      g.restore();
+    }
+    function drawNest(g, p) {
+      const w = p.w, h = p.h, x = p.x, y = p.y;
+      const top = p.side === "top";
+      g.save();
+      g.translate(x, y);
+      g.fillStyle = "rgba(0,0,0,0.35)";
+      roundRect(g, -w / 2 + 2, -h / 2 + 3, w, h, h / 2);
+      g.fill();
+      g.shadowColor = top ? "#9aa8ff" : "#ffaa55";
+      g.shadowBlur = 14 + (p.flash || 0) * 18;
+      const grd = g.createLinearGradient(0, -h, 0, h);
+      if (top) {
+        grd.addColorStop(0, "#e8e4ff");
+        grd.addColorStop(0.4, "#8d8cff");
+        grd.addColorStop(1, "#3a2f9a");
+      } else {
+        grd.addColorStop(0, "#ffe3b0");
+        grd.addColorStop(0.4, "#ff9a4a");
+        grd.addColorStop(1, "#b44012");
+      }
+      g.fillStyle = grd;
+      g.strokeStyle = top ? "#f3f0ff" : "#fff0c8";
+      g.lineWidth = 2.5;
+      roundRect(g, -w / 2, -h / 2, w, h, h / 2);
+      g.fill();
+      g.stroke();
+      g.shadowBlur = 0;
+      g.strokeStyle = "rgba(40, 18, 8, 0.35)";
+      g.lineWidth = 1.4;
+      const rows = 4;
+      for (let i = 0; i < rows; i++) {
+        const yy = -h / 2 + 4 + i * ((h - 8) / (rows - 1));
+        g.beginPath();
+        g.moveTo(-w / 2 + 7, yy);
+        g.quadraticCurveTo(0, yy + (i % 2 ? 3 : -3), w / 2 - 7, yy);
+        g.stroke();
+      }
+      g.fillStyle = "rgba(255,255,255,0.28)";
+      roundRect(g, -w / 2 + 6, -h / 2 + 2, w - 12, h * 0.38, 6);
+      g.fill();
+      g.restore();
+    }
+    function hillPath(g, yBase, amp, seed, flip) {
+      g.beginPath();
+      if (flip) { g.moveTo(0, 0); g.lineTo(0, yBase); }
+      else { g.moveTo(0, H); g.lineTo(0, yBase); }
+      const steps = 8;
+      for (let i = 0; i <= steps; i++) {
+        const x = (W * i) / steps;
+        const n = Math.sin(i * 1.3 + seed) * amp + Math.sin(i * 0.5 + seed * 2) * amp * 0.4;
+        g.lineTo(x, yBase + n);
+      }
+      if (flip) { g.lineTo(W, 0); }
+      else { g.lineTo(W, H); }
+      g.closePath();
+    }
+    function draw() {
+      const g = ctx;
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const sx = (shake ? rand(-shake, shake) : 0);
+      const sy = (shake ? rand(-shake, shake) : 0);
+      g.translate(sx, sy);
+
+      const sky = g.createLinearGradient(0, 0, 0, H);
+      sky.addColorStop(0, "#1c1048");
+      sky.addColorStop(0.45, "#2a1a5c");
+      sky.addColorStop(0.55, "#2a1a5c");
+      sky.addColorStop(1, "#1c1048");
+      g.fillStyle = sky;
+      g.fillRect(-20, -20, W + 40, H + 40);
+
+      g.save();
+      g.globalAlpha = 0.35;
+      for (let i = 0; i < 3; i++) {
+        const yg = H * (0.25 + i * 0.18);
+        const aur = g.createLinearGradient(0, yg - 40, 0, yg + 40);
+        aur.addColorStop(0, "rgba(80, 200, 180, 0)");
+        aur.addColorStop(0.5, i === 1 ? "rgba(140, 90, 255, 0.7)" : "rgba(70, 210, 180, 0.55)");
+        aur.addColorStop(1, "rgba(80, 200, 180, 0)");
+        g.fillStyle = aur;
+        g.beginPath();
+        g.ellipse(W * (0.3 + i * 0.2), yg + Math.sin(time * 0.3 + i) * 10, W * 0.55, 50, 0, 0, Math.PI * 2);
+        g.fill();
+      }
+      g.restore();
+
+      for (let i = 0; i < stars.length; i++) {
+        const s = stars[i];
+        const a = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(time * s.sp + s.ph));
+        g.fillStyle = "rgba(255,245,220," + a + ")";
+        g.beginPath();
+        g.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2);
+        g.fill();
+      }
+
+      g.fillStyle = "#140a30";
+      hillPath(g, H * 0.86, 28, 1.2, false); g.fill();
+      g.fillStyle = "#1a0f3c";
+      hillPath(g, 0 + H * 0.14, 28, 2.1, true); g.fill();
+      g.fillStyle = "#0e0824";
+      hillPath(g, H * 0.92, 16, 3.4, false); g.fill();
+      g.fillStyle = "#0e0824";
+      hillPath(g, H * 0.08, 16, 4.2, true); g.fill();
+
+      const cx = court.x, cy = paddles.top.y - 20, cw = court.w, ch = paddles.bot.y - paddles.top.y + 40;
+      g.save();
+      g.shadowColor = "rgba(255, 210, 120, 0.35)";
+      g.shadowBlur = 24;
+      const floor = g.createLinearGradient(cx, cy, cx, cy + ch);
+      floor.addColorStop(0, "rgba(70, 50, 130, 0.45)");
+      floor.addColorStop(0.5, "rgba(40, 24, 80, 0.35)");
+      floor.addColorStop(1, "rgba(70, 50, 130, 0.45)");
+      g.fillStyle = floor;
+      g.strokeStyle = "rgba(255, 224, 138, 0.55)";
+      g.lineWidth = 3;
+      roundRect(g, cx, cy, cw, ch, 28);
+      g.fill();
+      g.stroke();
+      g.shadowBlur = 0;
+      g.beginPath();
+      g.setLineDash([10, 10]);
+      g.strokeStyle = "rgba(255, 224, 138, 0.45)";
+      g.lineWidth = 2;
+      g.moveTo(cx + 18, H / 2);
+      g.lineTo(cx + cw - 18, H / 2);
+      g.stroke();
+      g.setLineDash([]);
+      g.restore();
+
+      for (let i = 0; i < motes.length; i++) {
+        const m = motes[i];
+        const mx = court.x + ((m.x + time * m.v) % 1) * court.w;
+        const my = (paddles.top.y + 20) + ((m.y + Math.sin(time * 0.3 + m.ph) * 0.05) % 1) * (paddles.bot.y - paddles.top.y - 40);
+        g.fillStyle = "rgba(255, 230, 160, 0.35)";
+        g.beginPath();
+        g.arc(mx, my, m.s, 0, Math.PI * 2);
+        g.fill();
+      }
+
+      for (let i = 0; i < ball.trail.length; i++) {
+        const t = ball.trail[i];
+        const a = (i + 1) / ball.trail.length;
+        g.fillStyle = "rgba(255, 210, 120," + (a * 0.35) + ")";
+        g.beginPath();
+        g.ellipse(t.x, t.y, ball.r * 0.7 * a, ball.r * 0.9 * a, t.r, 0, Math.PI * 2);
+        g.fill();
+      }
+
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        g.globalAlpha = Math.max(0, p.life / p.max);
+        g.fillStyle = p.color;
+        g.beginPath();
+        g.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        g.fill();
+      }
+      g.globalAlpha = 1;
+
+      drawNest(g, paddles.top);
+      drawNest(g, paddles.bot);
+      const stretch = ball.live ? clamp(Math.hypot(ball.vx, ball.vy) / 700, 0, 0.28) : 0;
+      const rx = ball.r * (0.82 - stretch * 0.15);
+      const ry = ball.r * (1.12 + stretch);
+      drawEgg(g, ball.x, ball.y, rx, ry, ball.rot, 1);
+    }
+
+    /* ---------- Menus ---------- */
+    function chip(opt, val, label) {
+      const on = String(settings[opt]) === String(val) ? " on" : "";
+      return '<button type="button" class="chip' + on + '" data-opt="' + opt + '" data-val="' + val + '">' + label + "</button>";
+    }
+    function modeBtn(val, label) {
+      const on = settings.players === val ? " on" : "";
+      return '<button type="button" class="mode-btn' + on + '" data-opt="players" data-val="' + val + '">' + label + "</button>";
+    }
+    function optRow(label, inner) {
+      return '<div class="row lined"><span class="lab-inline">' + label + "</span>" + inner + "</div>";
+    }
+    function menuPanel(kind) {
+      const two = settings.players === "2p";
+      const sizeTopLab = two ? "Starlings" : (settings.human === "top" ? "Your nest" : "Keeper");
+      const sizeBotLab = two ? "Embers" : (settings.human === "bot" ? "Your nest" : "Keeper");
+      const how = two
+        ? "Sit at each end and drag your nest. Give a little sibling the Big nest. Computer: A/D and arrows."
+        : "Drag your nest to keep the egg flying. Arrow keys work on a computer.";
+      let extra = "";
+      if (!two) {
+        extra =
+          optRow("Keeper", chip("ai", "gentle", "Gentle") + chip("ai", "keen", "Keen") + chip("ai", "swift", "Swift")) +
+          optRow("You play", chip("human", "bot", "Ember side") + chip("human", "top", "Starling side"));
+      }
+      return (
+        '<div class="panel">' +
+        '<button type="button" class="icon-btn mute-btn panel-mute" data-action="mute" aria-label="Mute">🔊</button>' +
+        '<h1 class="title">SPARKEGG</h1>' +
+        '<p class="tag">Keep the dragon egg flying!</p>' +
+        '<div class="row">' + modeBtn("2p", "2 Kids") + modeBtn("1p", "vs Nest Keeper") + "</div>" +
+        extra +
+        optRow("First to", chip("points", 5, "5") + chip("points", 7, "7") + chip("points", 11, "11")) +
+        optRow("Egg speed", chip("speed", "gentle", "Gentle") + chip("speed", "normal", "Normal") + chip("speed", "fast", "Fast")) +
+        optRow(sizeTopLab, chip("sizeTop", "big", "Big") + chip("sizeTop", "normal", "Normal") + chip("sizeTop", "small", "Small")) +
+        optRow(sizeBotLab, chip("sizeBot", "big", "Big") + chip("sizeBot", "normal", "Normal") + chip("sizeBot", "small", "Small")) +
+        '<p class="how">' + how + "</p>" +
+        '<button type="button" class="play-btn" data-action="start">Play!</button>' +
+        "</div>"
+      );
+    }
+    function overlayShell(innerTop, innerBot, mid) {
+      return (
+        '<div class="half top">' + innerTop + "</div>" +
+        '<div class="midline">' + (mid || "🥚") + "</div>" +
+        '<div class="half bot">' + innerBot + "</div>"
+      );
+    }
+    function renderMenus() {
+      menuEl.innerHTML = overlayShell(menuPanel(), menuPanel());
+    }
+    function renderPause() {
+      const body = function () {
+        return (
+          '<div class="panel">' +
+          '<p class="big">Paused</p>' +
+          '<button type="button" class="end-btn primary" data-action="resume">Resume</button>' +
+          '<button type="button" class="end-btn alt" data-action="rematch">Rematch</button>' +
+          '<button type="button" class="end-btn alt" data-action="menu">Home</button>' +
+          "</div>"
+        );
+      };
+      pauseEl.innerHTML = overlayShell(body(), body(), "⏸");
+    }
+    function renderEnd() {
+      const who = teamName(winner);
+      const body = function () {
+        return (
+          '<div class="panel">' +
+          '<p class="big">' + (who === "You" ? "You win!" : who === "Nest Keeper" ? "Nest Keeper wins!" : who + " win!") + "</p>" +
+          '<p class="result">' + teamName("top") + ' <span>' + scoreTop + "</span> — <span>" + scoreBot + "</span> " + teamName("bot") + "</p>" +
+          '<button type="button" class="end-btn primary" data-action="rematch">Rematch</button>' +
+          '<button type="button" class="end-btn alt" data-action="menu">Home</button>' +
+          "</div>"
+        );
+      };
+      endEl.innerHTML = overlayShell(body(), body(), "✨");
+    }
+
+    function onUiClick(e) {
+      const btn = e.target.closest && e.target.closest("button");
+      if (!btn) return;
+      SFX.unlock();
+      const action = btn.getAttribute("data-action");
+      const opt = btn.getAttribute("data-opt");
+      if (action === "mute") { SFX.setMuted(!SFX.muted); return; }
+      if (action === "start") { startMatch(); return; }
+      if (action === "pause") { togglePause(); return; }
+      if (action === "resume") { togglePause(); return; }
+      if (action === "rematch") { rematch(); return; }
+      if (action === "menu") { goMenu(); return; }
+      if (opt) {
+        let val = btn.getAttribute("data-val");
+        if (opt === "points") val = parseInt(val, 10);
+        settings[opt] = val;
+        saveSettings();
+        layoutPaddles(false);
+        if (menuEl.style.display !== "none") renderMenus();
+        updateMuteUI();
+      }
+    }
+    document.getElementById("ui").addEventListener("click", onUiClick);
+
+    /* ---------- Loop ---------- */
+    function loop(t) {
+      const dt = Math.min(0.033, (t - lastT) / 1000) || 0.016;
+      lastT = t;
+      if (state === "play" && !paused) update(dt);
+      else updateIdle(dt);
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    /* ---------- Test hook ---------- */
+    window.__SPARKEGG__ = {
+      get state() { return state; },
+      get paused() { return paused; },
+      get scoreTop() { return scoreTop; },
+      get scoreBot() { return scoreBot; },
+      get rally() { return rally; },
+      get winner() { return winner; },
+      get top() { return { x: paddles.top.x, y: paddles.top.y, w: paddles.top.w, h: paddles.top.h }; },
+      get bot() { return { x: paddles.bot.x, y: paddles.bot.y, w: paddles.bot.w, h: paddles.bot.h }; },
+      get ball() { return { x: ball.x, y: ball.y, vx: ball.vx, vy: ball.vy, live: ball.live, r: ball.r }; },
+      get court() { return { x: court.x, y: court.y, w: court.w, h: court.h, W: W, H: H }; },
+      get settings() { return Object.assign({}, settings); },
+      startTwoPlayer: function (opts) {
+        Object.assign(settings, defaults, { players: "2p" }, opts || {});
+        startMatch();
+      },
+      startVsKeeper: function (opts) {
+        Object.assign(settings, defaults, { players: "1p" }, opts || {});
+        startMatch();
+      },
+      serveNow: function () { countTimer = 0; countVal = 0; launchBall(); },
+      holdServe: function () { ball.live = false; countTimer = 99; countVal = 3; },
+      placeBall: function (x, y, vx, vy) {
+        ball.x = x; ball.y = y; ball.vx = vx; ball.vy = vy; ball.live = true; scored = false; ball.hitCool = 0;
+        countUi.style.display = "none";
+      },
+      setPaddleX: function (side, x) { paddles[side].x = x; paddles[side].targetX = x; },
+      skipToWin: function (side) {
+        if (side === "top") scoreTop = settings.points; else scoreBot = settings.points;
+        winner = side; finishWin();
+      }
+    };
+
+    /* ---------- Boot ---------- */
+    resize();
+    bakeIcon();
+    goMenu();
+    updateMuteUI();
+    lastT = performance.now();
+    requestAnimationFrame(loop);
+  })();
+  </script>
+</body>
+</html>
