@@ -6,6 +6,7 @@ Kid-friendly browser games, one self-contained game per folder, published on Git
 
 - [Koebel Kids Games](https://koebelsundries.github.io/kids-games/)
 - [Emberwing](https://koebelsundries.github.io/kids-games/emberwing/) — a dragon flying game with Little Rider, Normal, and Hard modes
+- [Goalburst](https://koebelsundries.github.io/kids-games/penalty-shootout/) — a 3D penalty-kick shootout: swipe to curve a shot, play keeper, or pass the phone for a sibling showdown
 
 ## Add a game
 

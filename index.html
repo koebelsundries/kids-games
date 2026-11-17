@@ -39,6 +39,11 @@
       font-size: 1.15rem;
       font-weight: 600;
     }
+    .games {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
     a.card {
       display: flex;
       align-items: center;
@@ -68,6 +73,9 @@
       border-radius: 18px;
       border: 3px solid #1d3557;
     }
+    .mark.pitch {
+      background: linear-gradient(160deg, #6ad08a, #2f9a58);
+    }
     h2 { margin: 0 0 6px; font-size: 1.45rem; }
     p { margin: 0; line-height: 1.4; font-size: 1.05rem; }
     footer {
@@ -82,13 +90,22 @@
   <main>
     <h1>Koebel Kids Games</h1>
     <p class="lead">Little games you can play right in the browser.</p>
-    <a class="card" href="emberwing/">
-      <span class="mark" aria-hidden="true">🐉</span>
-      <span>
-        <h2>Emberwing</h2>
-        <p>A dragon flying game with Little Rider, Normal, and Hard modes. Soar with your dragon and see how far you can go.</p>
-      </span>
-    </a>
+    <div class="games">
+      <a class="card" href="emberwing/">
+        <span class="mark" aria-hidden="true">🐉</span>
+        <span>
+          <h2>Emberwing</h2>
+          <p>A dragon flying game with Little Rider, Normal, and Hard modes. Soar with your dragon and see how far you can go.</p>
+        </span>
+      </a>
+      <a class="card" href="penalty-shootout/">
+        <span class="mark pitch" aria-hidden="true">⚽</span>
+        <span>
+          <h2>Goalburst</h2>
+          <p>A 3D penalty-kick shootout. Swipe to curve a shot, be the keeper, or pass the phone for a sibling showdown.</p>
+        </span>
+      </a>
+    </div>
     <footer>Tap a game to play. More games will land here.</footer>
   </main>
 </body>

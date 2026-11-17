@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Goalburst" />
+  <meta name="theme-color" content="#1d6b3a" />
+  <meta name="description" content="Goalburst - a 3D penalty-kick shootout" />
+  <meta name="format-detection" content="telephone=no" />
+  <title>Goalburst</title>
+  <link rel="icon" id="favicon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect fill='%231d6b3a' width='64' height='64' rx='14'/%3E%3Crect x='6' y='34' width='52' height='22' fill='%233d9a4a'/%3E%3Ccircle cx='32' cy='30' r='14' fill='%23f4f4f4'/%3E%3Ccircle cx='32' cy='30' r='14' fill='none' stroke='%23111' stroke-width='2'/%3E%3Ccircle cx='32' cy='30' r='5' fill='%23111'/%3E%3Cpath d='M32 16 L32 24 M32 36 L32 44 M18 30 L26 30 M38 30 L46 30' stroke='%23111' stroke-width='2'/%3E%3Cpath d='M22 20 L27 26 M42 20 L37 26 M22 40 L27 34 M42 40 L37 34' stroke='%23111' stroke-width='2'/%3E%3C/svg%3E" />
+  <link rel="manifest" id="manifestLink" />
+  <link rel="apple-touch-icon" id="appleIcon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect fill='%231d6b3a' width='64' height='64' rx='14'/%3E%3Ccircle cx='32' cy='32' r='16' fill='%23f4f4f4' stroke='%23111' stroke-width='2'/%3E%3Ccircle cx='32' cy='32' r='5' fill='%23111'/%3E%3C/svg%3E" />
+  <style>
+    :root { --safe-t: env(safe-area-inset-top, 0px); --safe-b: env(safe-area-inset-bottom, 0px); --safe-l: env(safe-area-inset-left, 0px); --safe-r: env(safe-area-inset-right, 0px); }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+    html, body {
+      margin: 0; padding: 0; width: 100%; height: 100%;
+      overflow: hidden; background: #14703a;
+      position: fixed; inset: 0;
+      touch-action: none;
+      overscroll-behavior: none;
+      font-family: "Trebuchet MS", "Segoe UI", "Avenir Next", "Avenir", "Nunito", sans-serif;
+      color: #fff;
+    }
+    canvas#c, canvas#fx {
+      position: fixed; inset: 0; width: 100%; height: 100%; display: block;
+    }
+    canvas#c { z-index: 0; }
+    canvas#fx { z-index: 1; pointer-events: none; }
+    #ui { position: fixed; inset: 0; z-index: 2; pointer-events: none; }
+    #ui button, #ui .hit, #touch.active { pointer-events: auto; }
+    button {
+      font-family: inherit; border: 0; cursor: pointer;
+      color: #fff; font-weight: 800; letter-spacing: 0.02em;
+    }
+    button:active { transform: scale(0.97); }
+    button:focus-visible { outline: 3px solid #ffe08a; outline-offset: 3px; }
+
+    #touch { position: absolute; inset: 0; z-index: 1; }
+    #hud, #menu, #teams, #end, #pass, #pause, #toast, #hint, #powerWrap, #nowebgl { z-index: 3; }
+
+    #hud {
+      position: absolute; top: 0; left: 0; right: 0;
+      padding: calc(10px + var(--safe-t)) 14px 0;
+      display: none; align-items: flex-start; justify-content: space-between; gap: 8px;
+    }
+    .hud-left, .hud-right { display: flex; flex-direction: column; gap: 4px; min-width: 90px; }
+    .hud-right { align-items: flex-end; }
+    #board {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(8, 28, 16, 0.55);
+      border: 2px solid rgba(255,255,255,0.35);
+      border-radius: 14px; padding: 6px 10px;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 4px 12px rgba(0,0,0,.25);
+    }
+    #board .tname { font-size: 13px; font-weight: 800; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #board .score { font-size: 26px; font-weight: 900; text-shadow: 0 2px 0 #0a3a18, 0 4px 10px rgba(0,0,0,.45); letter-spacing: 0.04em; }
+    #board .vs { opacity: 0.7; font-size: 12px; }
+    .sub { font-size: 13px; opacity: 0.95; text-shadow: 0 1px 4px rgba(0,0,0,.5); font-weight: 700; }
+    #kicksEl { letter-spacing: 2px; font-size: 16px; text-shadow: 0 2px 6px rgba(0,0,0,.45); }
+    #windChip {
+      display: none; align-items: center; gap: 6px;
+      background: rgba(8, 28, 16, 0.55);
+      border: 2px solid rgba(255,255,255,0.35);
+      border-radius: 999px; padding: 4px 10px;
+      font-size: 13px; font-weight: 800;
+      backdrop-filter: blur(6px);
+    }
+    #windChip.show { display: flex; }
+    #iconBtns { display: flex; gap: 8px; }
+    .icon-btn {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: rgba(8, 28, 16, 0.55); border: 2px solid rgba(255,255,255,0.35);
+      font-size: 20px; display: grid; place-items: center; backdrop-filter: blur(6px);
+      box-shadow: 0 4px 12px rgba(0,0,0,.25);
+    }
+
+    #menu, #teams, #end, #pass, #pause, #nowebgl {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: calc(16px + var(--safe-t)) 20px calc(20px + var(--safe-b));
+      background: linear-gradient(to bottom, rgba(6,30,14,0.20), rgba(6,30,14,0.55));
+      text-align: center; overflow: auto; touch-action: pan-y;
+    }
+    #teams, #end, #pass, #pause, #nowebgl { display: none; }
+    #pause { background: rgba(6,30,14,0.62); }
+    .title {
+      font-size: clamp(42px, 12vw, 76px); font-weight: 900; margin: 0;
+      color: #fff4c8; letter-spacing: 0.04em;
+      text-shadow: 0 3px 0 #2f9a58, 0 7px 0 #0d5a2c, 0 12px 24px rgba(0,0,0,.45);
+      line-height: 0.95;
+    }
+    .tag { margin: 8px 0 18px; font-size: clamp(15px, 4vw, 20px); font-weight: 700;
+      color: #eaf6ff; text-shadow: 0 2px 8px rgba(0,0,0,.6); }
+    .modes { display: flex; flex-direction: column; gap: 10px; width: min(420px, 100%); }
+    .mode-btn {
+      border-radius: 18px; padding: 12px 16px 12px 14px;
+      display: flex; align-items: center; gap: 12px; text-align: left;
+      box-shadow: 0 5px 0 rgba(0,0,0,.25), 0 10px 20px rgba(0,0,0,.2);
+      border: 3px solid rgba(255,255,255,0.35);
+    }
+    .mode-btn .ico { font-size: 32px; width: 46px; text-align: center; flex: 0 0 auto; }
+    .mode-btn .copy { flex: 1; min-width: 0; }
+    .mode-btn .name { font-size: 20px; display: block; }
+    .mode-btn .desc { font-size: 12px; font-weight: 600; opacity: 0.92; display: block; margin-top: 2px; line-height: 1.25; }
+    .mode-btn .hs { font-size: 12px; font-weight: 800; color: #ffe08a; white-space: nowrap; }
+    #btn-easy { background: linear-gradient(180deg, #6ad08a, #2f9a58); }
+    #btn-normal { background: linear-gradient(180deg, #5aa7ff, #2a62d4); }
+    #btn-hard { background: linear-gradient(180deg, #ff8a4a, #d44518); }
+    #btn-keeper { background: linear-gradient(180deg, #c084fc, #7c3aed); }
+    #btn-two { background: linear-gradient(180deg, #ffd36a, #e0a020); color: #3a1a00; }
+    #btn-two .hs, #btn-two .desc { color: #3a1a00; opacity: 0.85; }
+    .how {
+      margin-top: 16px; max-width: 440px; font-size: 13px; font-weight: 700; line-height: 1.45;
+      color: #eaf6ff; text-shadow: 0 2px 8px rgba(0,0,0,.7);
+    }
+    .menu-mute {
+      position: absolute; top: calc(10px + var(--safe-t)); right: calc(12px + var(--safe-r));
+      pointer-events: auto;
+    }
+
+    .team-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+      width: min(420px, 100%); margin: 8px 0 16px;
+    }
+    .team-btn {
+      border-radius: 16px; padding: 12px 10px;
+      border: 3px solid rgba(255,255,255,0.35);
+      box-shadow: 0 5px 0 rgba(0,0,0,.25);
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      color: #fff; min-height: 86px;
+    }
+    .team-btn .swatch {
+      width: 54px; height: 36px; border-radius: 8px;
+      border: 2px solid rgba(255,255,255,0.7);
+      box-shadow: inset 0 -8px 0 rgba(0,0,0,.18);
+    }
+    .team-btn .tn { font-size: 14px; line-height: 1.2; }
+    .team-btn.picked { outline: 3px solid #ffe08a; outline-offset: 2px; transform: translateY(-2px); }
+    .go-btn, .end-btn {
+      border-radius: 16px; padding: 14px 16px; font-size: 18px;
+      border: 3px solid rgba(255,255,255,0.35);
+      box-shadow: 0 5px 0 rgba(0,0,0,.25);
+      width: min(320px, 100%);
+    }
+    #btn-start, #btn-again, #btn-ready, #btn-resume { background: linear-gradient(180deg, #ffb347, #e07a20); color: #3a1a00; }
+    #btn-back, #btn-menu, #btn-quit { background: linear-gradient(180deg, #5aa7ff, #2a62d4); color: #fff; margin-top: 10px; }
+    #endActions, #pauseActions { display: flex; flex-direction: column; gap: 10px; width: min(320px, 100%); margin-top: 16px; align-items: center; }
+    #end .big, #pass .big, #pause .big { font-size: clamp(32px, 9vw, 54px); margin: 0 0 6px; text-shadow: 0 3px 0 #0d5a2c, 0 8px 18px rgba(0,0,0,.45); color: #fff4c8; }
+    #end .result, #pass .result { font-size: 22px; font-weight: 800; margin: 4px 0; text-shadow: 0 2px 8px rgba(0,0,0,.5); }
+    #end .result span { color: #ffe08a; }
+
+    #toast {
+      position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%) scale(0.9);
+      font-size: clamp(28px, 8vw, 56px); font-weight: 900; color: #fff4c8;
+      text-shadow: 0 3px 0 #0d5a2c, 0 8px 16px rgba(0,0,0,.5);
+      opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; text-align: center; white-space: pre-line;
+      max-width: 90%;
+    }
+    #toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    #toast.goal { color: #fff4c8; }
+    #toast.save { color: #d6f0ff; }
+    #toast.miss { color: #ffe0c0; }
+
+    #hint {
+      position: absolute; left: 50%; bottom: calc(28px + var(--safe-b));
+      transform: translateX(-50%);
+      font-size: clamp(16px, 4.4vw, 22px); font-weight: 800;
+      text-shadow: 0 2px 8px rgba(0,0,0,.7);
+      opacity: 0; transition: opacity .25s; pointer-events: none;
+      text-align: center; width: 90%;
+    }
+    #hint.show { opacity: 1; }
+
+    #powerWrap {
+      position: absolute;
+      left: calc(12px + var(--safe-l));
+      bottom: calc(28px + var(--safe-b));
+      width: 16px; height: 140px;
+      background: rgba(8,28,16,0.45);
+      border: 2px solid rgba(255,255,255,0.4);
+      border-radius: 10px;
+      display: none; overflow: hidden;
+    }
+    #powerFill {
+      position: absolute; left: 0; right: 0; bottom: 0; height: 0%;
+      background: linear-gradient(180deg, #fff36a, #3dff7a);
+    }
+    #powerWrap.show { display: block; }
+
+    #nowebgl p { max-width: 420px; font-weight: 700; line-height: 1.45; }
+
+    @media (min-width: 800px) and (orientation: landscape) {
+      .modes { flex-direction: row; flex-wrap: wrap; width: min(980px, 100%); }
+      .mode-btn { flex-direction: column; text-align: center; padding: 14px 12px; flex: 1 1 18%; min-width: 150px; }
+      .mode-btn .hs { white-space: normal; }
+      .team-grid { grid-template-columns: repeat(3, 1fr); width: min(640px, 100%); }
+    }
+    @media (max-height: 500px) and (orientation: landscape) {
+      .title { font-size: clamp(28px, 8vh, 42px); }
+      .tag { margin: 4px 0 10px; font-size: 14px; }
+      .modes { flex-direction: row; flex-wrap: wrap; width: min(920px, 100%); gap: 8px; }
+      .mode-btn { flex: 1 1 30%; padding: 8px 10px; gap: 8px; }
+      .mode-btn .name { font-size: 16px; }
+      .mode-btn .desc { display: none; }
+      .how { margin-top: 8px; font-size: 12px; }
+      .team-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 4px 0 10px; }
+      .team-btn { min-height: 70px; padding: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <canvas id="fx"></canvas>
+  <div id="ui">
+    <div id="touch"></div>
+
+    <div id="menu">
+      <button class="icon-btn menu-mute" id="menuMute" type="button" data-action="mute" aria-label="Mute">🔊</button>
+      <h1 class="title">GOALBURST</h1>
+      <div class="tag">A 3D penalty-kick showdown</div>
+      <div class="modes">
+        <button class="mode-btn" id="btn-easy" type="button" data-mode="easy">
+          <span class="ico">🌟</span>
+          <span class="copy">
+            <span class="name">Little Kicker</span>
+            <span class="desc">A big goal and a sleepy keeper — almost every shot goes in</span>
+          </span>
+          <span class="hs" id="hs-easy">Best 0/5</span>
+        </button>
+        <button class="mode-btn" id="btn-normal" type="button" data-mode="normal">
+          <span class="ico">⚽</span>
+          <span class="copy">
+            <span class="name">Normal Kick</span>
+            <span class="desc">Aim, curve, and fire past a ready goalie</span>
+          </span>
+          <span class="hs" id="hs-normal">Best 0/5</span>
+        </button>
+        <button class="mode-btn" id="btn-hard" type="button" data-mode="hard">
+          <span class="ico">💨</span>
+          <span class="copy">
+            <span class="name">Hard Kick</span>
+            <span class="desc">A sharp keeper and swirling wind for brave strikers</span>
+          </span>
+          <span class="hs" id="hs-hard">Best 0/5</span>
+        </button>
+        <button class="mode-btn" id="btn-keeper" type="button" data-mode="keeper">
+          <span class="ico">🧤</span>
+          <span class="copy">
+            <span class="name">Be the Keeper</span>
+            <span class="desc">Swipe to dive and stop the computer's shots</span>
+          </span>
+          <span class="hs" id="hs-keeper">Best 0/5</span>
+        </button>
+        <button class="mode-btn" id="btn-two" type="button" data-mode="two">
+          <span class="ico">🤝</span>
+          <span class="copy">
+            <span class="name">2-Player</span>
+            <span class="desc">Pass the phone — 5 kicks each, then sudden death</span>
+          </span>
+          <span class="hs" id="hs-two">Siblings</span>
+        </button>
+      </div>
+      <div class="how">Swipe to shoot: direction aims, a curved swipe bends the ball, a faster swipe hits harder.<br>On a computer, click and drag the same way. In Be the Keeper, swipe to dive.</div>
+    </div>
+
+    <div id="teams">
+      <button class="icon-btn menu-mute" id="teamMute" type="button" data-action="mute" aria-label="Mute">🔊</button>
+      <h2 class="title" style="font-size:clamp(28px,8vw,44px)" id="teamTitle">Pick your team</h2>
+      <div class="tag" id="teamTag">Choose your colors</div>
+      <div class="team-grid" id="teamGrid"></div>
+      <button class="go-btn" id="btn-start" type="button">Let's kick!</button>
+      <button class="go-btn" id="btn-back" type="button">Back</button>
+    </div>
+
+    <div id="hud">
+      <div class="hud-left">
+        <div id="board">
+          <span class="tname" id="nameA">Sparks</span>
+          <span class="score" id="scoreA">0</span>
+          <span class="vs">·</span>
+          <span class="score" id="scoreB">0</span>
+          <span class="tname" id="nameB">Goalie</span>
+        </div>
+        <div class="sub" id="kicksEl">Kick 1/5</div>
+      </div>
+      <div class="hud-right">
+        <div id="iconBtns">
+          <button class="icon-btn" id="pauseBtn" type="button" data-action="pause" aria-label="Pause">❚❚</button>
+          <button class="icon-btn" id="muteBtn" type="button" data-action="mute" aria-label="Mute">🔊</button>
+        </div>
+        <div id="windChip"><span id="windArrow">→</span><span id="windLabel">Wind</span></div>
+        <div class="sub" id="hudHs">Best 0/5</div>
+      </div>
+    </div>
+
+    <div id="powerWrap" aria-hidden="true"><div id="powerFill"></div></div>
+    <div id="hint"></div>
+    <div id="toast"></div>
+
+    <div id="pass">
+      <div class="big" id="passTitle">Pass the phone!</div>
+      <div class="result" id="passSub"></div>
+      <div class="how" id="passHow">Hand it over, then tap when you're ready.</div>
+      <button class="go-btn" id="btn-ready" type="button">We're ready!</button>
+    </div>
+
+    <div id="pause">
+      <div class="big">Paused</div>
+      <div id="pauseActions">
+        <button class="end-btn" id="btn-resume" type="button">Keep playing</button>
+        <button class="end-btn" id="btn-quit" type="button">Quit to menu</button>
+      </div>
+    </div>
+
+    <div id="end">
+      <div class="big" id="endTitle">What a match!</div>
+      <div class="result">Score <span id="endScore">0/5</span></div>
+      <div class="result" id="endBestLine">Best <span id="endBest">0/5</span></div>
+      <div class="how" id="endDetail"></div>
+      <div id="endActions">
+        <button class="end-btn" id="btn-again" type="button">Play again</button>
+        <button class="end-btn" id="btn-menu" type="button">Choose a mode</button>
+      </div>
+    </div>
+
+    <div id="nowebgl">
+      <h1 class="title" style="font-size:42px">Oh no!</h1>
+      <p>This game needs 3D graphics, and they could not start on this device. Try another browser or update your tablet.</p>
+    </div>
+  </div>
+  <script type="module" src="./game.js"></script>
+</body>
+</html>
