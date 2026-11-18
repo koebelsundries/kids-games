@@ -307,7 +307,7 @@
           <span class="ico">🐉</span>
           <span class="copy">
             <span class="name">Normal Ride</span>
-            <span class="desc">Collect skygems, dodge spires, and blast gloom puffs</span>
+            <span class="desc">Collect skygems, dodge spires, and blast gloom monsters</span>
           </span>
           <span class="hs" id="hs-normal">Best 0</span>
         </button>
@@ -865,7 +865,7 @@
       stopMusic();
       const tips = {
         easy: "Drag to fly, little rider!\n🔥 buttons breathe fire",
-        normal: "Drag to steer · hold a 🔥 button to blast gloom puffs!",
+        normal: "Drag to steer · hold a 🔥 button to blast gloom monsters!",
         hard: "Steer with one thumb, 🔥 with the other!"
       };
       // Countdown first: the scene shows and the dragon hovers (kids can already
@@ -1130,8 +1130,10 @@
         puffs.push({
           x: x + i * rand(40, 80),
           y: rand(H * 0.2, H * 0.78),
-          r: mode.id === "easy" ? 32 : 26,
-          hp: 1, bob: rand(0, 6), dead: false
+          // hitbox = the monster's furry body (wings and horns don't count)
+          r: SPR.monster.bodyR[mode.id === "easy" ? "mE" : "m"],
+          v: SPR.monster.variants[irand(0, SPR.monster.variants.length - 1)],
+          seed: rand(0, 100), hp: 1, bob: rand(0, 6), dead: false, popT: 0, frame: ""
         });
       }
     }
@@ -1183,6 +1185,7 @@
 
     function popPuff(p) {
       p.dead = true;
+      p.popT = 0.2; // show the "pop!" frame for a moment
       const pts = 50 + Math.min(combo, 8) * 5;
       score += pts;
       combo++;
@@ -1276,6 +1279,7 @@
       };
       window.__emberNoDamage = function () { testNoDamage = true; };
       window.__emberEnd = function () { if (state === "play") endGame(false); };
+      window.__emberPuffs = function () { return puffs.map(function (p) { return { x: p.x - worldX, y: p.y + Math.sin(p.bob) * 8, r: p.r, v: p.v, dead: p.dead, frame: p.frame }; }); };
       window.__emberObstacles = function () { return obstacles.map(function (o) { return { type: o.type, x: o.x - worldX, y: o.y, w: o.w, h: o.h, r: o.r, from: o.from }; }); };
     }
 
@@ -1392,8 +1396,9 @@
       for (let i = puffs.length - 1; i >= 0; i--) {
         const p = puffs[i];
         const px = p.x - cam;
-        if (p.dead || px < -80) { puffs.splice(i, 1); continue; }
+        if ((p.dead && !(p.popT > 0)) || px < -80) { puffs.splice(i, 1); continue; }
         p.bob += dt * 2.2;
+        if (p.dead) { p.popT -= dt; continue; }
         const py = p.y + Math.sin(p.bob) * 8;
         if (flameHits(px, py, p.r)) { popPuff(p); continue; }
         const dx = px - dragon.x, dy = py - dragon.y;
@@ -1474,7 +1479,7 @@
       }
       for (let i = 0; i < clouds.length; i++) {
         const c = clouds[i];
-        const par = c.layer === 0 ? 0.15 : c.layer === 1 ? 0.28 : 0.5;
+        const par = c.layer === 0 ? 0.1 : c.layer === 1 ? 0.18 : 0.3;
         if (c.x - worldX * par < -300) {
           c.x = worldX * par + W + rand(40, 400);
           c.y = rand(0.06, 0.5) * H;
@@ -1552,13 +1557,12 @@
       tileX(IMG.hills, t * 0.45 / ps, hillsTop);
 
       // the nearest clouds stay behind the action so gems and puffs are always easy to see
-      ctx.globalAlpha = 0.8;
+      ctx.globalAlpha = 0.7;
       drawClouds(2, t);
       ctx.globalAlpha = 1;
 
       const cam = t;
-      const puffName = mode.id === "easy" ? "puffE" : "puff";
-      puffs.forEach(function (p) { if (!p.dead) sprC(puffName, p.x - cam, p.y + Math.sin(p.bob) * 8); });
+      obstacles.forEach(function (o) { drawObstacle(o, o.x - cam); });
       gems.forEach(function (g) {
         if (g.taken) return;
         const name = g.kind === "star" ? "star" : "gem" + (g.hue | 0);
@@ -1570,7 +1574,19 @@
           ctx.fillRect(gx, gy - 1, 1, 3); ctx.fillRect(gx - 1, gy, 3, 1);
         }
       });
-      obstacles.forEach(function (o) { drawObstacle(o, o.x - cam); });
+      // monsters on top so they always read clearly
+      const mBase = mode.id === "easy" ? "mE" : "m";
+      puffs.forEach(function (p) {
+        // gloom monsters: quick wing flap, an occasional blink, and a "pop!" face when hit
+        let pose;
+        if (p.dead) pose = "hit";
+        else if (Math.sin(p.bob * 0.9 + p.seed) > 0.96) pose = "blink";
+        else pose = SPR.monster.flap[Math.floor(p.bob * 3.5) % 2];
+        p.frame = mBase + p.v + "_" + pose;
+        const lift = p.dead ? (0.2 - p.popT) * 40 : 0;
+        if (p.dead && Math.floor(p.popT * 30) % 2) return; // flicker while popping
+        sprC(p.frame, p.x - cam, p.y + Math.sin(p.bob) * 8 - lift);
+      });
 
 
       dragonFrame = currentDragonFrame();
@@ -1608,7 +1624,7 @@
     }
 
     function drawClouds(layer, t) {
-      const par = layer === 0 ? 0.15 : layer === 1 ? 0.28 : 0.5;
+      const par = layer === 0 ? 0.1 : layer === 1 ? 0.18 : 0.3;
       for (let i = 0; i < clouds.length; i++) {
         const c = clouds[i];
         if (c.layer !== layer) continue;

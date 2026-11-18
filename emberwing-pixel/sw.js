@@ -1,5 +1,5 @@
 /* Emberwing Pixel - offline cache. Scope: emberwing-pixel/ only. */
-const CACHE = "emberwing-pixel-v2"; // v2: dragon legs tucked in flight
+const CACHE = "emberwing-pixel-v3"; // v3: gloom monsters + softer clouds (v2: tucked legs)
 const CORE = [
   "./",
   "./index.html",

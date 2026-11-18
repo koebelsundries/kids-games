@@ -16,9 +16,11 @@ Backgrounds, obstacles, enemies, pickups, fire and clouds
   palette-reduced without dithering):
     assets/bg-far.png    Suncrest Vale sky, sun and far mountains
     assets/bg-hills.png  near hills, pines, bushes and flowers
-    assets/sprites.png   gloom puff, 3 skygems, star, stone spire, mossy
+    assets/sprites.png   gloom monsters (4 poses x 3 colours x 2 sizes,
+                         from px-src/gen/monsters.jpg), 3 skygems, star, stone spire, mossy
                          boulder (2 sizes), watchtower (2 sizes), fire blast,
-                         4 clouds
+                         4 clouds (shrunk, softened and sky-tinted so they
+                         read as background)
 
 Font
   Press Start 2P by CodeMan38 (cody@zone38.net)
