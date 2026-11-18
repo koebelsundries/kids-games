@@ -56,11 +56,11 @@
       box-shadow: 0 4px 12px rgba(0,0,0,.25);
     }
 
-    #fireBtn {
+    .fire-btn {
       position: absolute;
-      right: calc(18px + var(--safe-r));
-      bottom: calc(22px + var(--safe-b));
-      width: 86px; height: 86px; border-radius: 50%;
+      bottom: calc(20px + var(--safe-b));
+      width: 88px; height: 88px; border-radius: 50%;
+      touch-action: none; opacity: 0.88; transition: opacity .15s;
       background: radial-gradient(circle at 35% 30%, #ffd56a, #ff8a2a 45%, #d44510 80%);
       border: 3px solid #fff3c4;
       box-shadow: 0 8px 0 #9a2a08, 0 12px 24px rgba(0,0,0,.35), 0 0 24px rgba(255,140,40,.55);
@@ -68,8 +68,15 @@
       flex-direction: column; align-items: center; justify-content: center;
       color: #4a1400; text-shadow: 0 1px 0 #ffe9a8;
     }
-    #fireBtn .emoji { font-size: 28px; line-height: 1; filter: drop-shadow(0 1px 0 #fff3c4); }
-    #fireBtn.hot { filter: brightness(1.15); transform: scale(1.05); }
+    #fireL { left: calc(16px + var(--safe-l)); }
+    #fireR { right: calc(16px + var(--safe-r)); }
+    /* invisible extra hit area so small thumbs don't miss */
+    .fire-btn::after { content: ""; position: absolute; inset: -14px; border-radius: 50%; }
+    .fire-btn .emoji { font-size: 34px; line-height: 1; filter: drop-shadow(0 1px 0 #fff3c4); pointer-events: none; }
+    .fire-btn .lbl { pointer-events: none; }
+    .fire-btn.hot { filter: brightness(1.18); transform: scale(1.06); opacity: 1; }
+    .fire-btn.faded { opacity: 0.38; }
+    .fire-btn.hot.faded { opacity: 0.7; }
 
     #menu, #end {
       position: absolute; inset: 0;
@@ -135,7 +142,7 @@
       .modes { flex-direction: row; width: min(920px, 100%); }
       .mode-btn { flex-direction: column; text-align: center; padding: 16px 12px; flex: 1; }
       .mode-btn .hs { white-space: normal; }
-      #fireBtn { width: 92px; height: 92px; }
+      .fire-btn { width: 92px; height: 92px; }
     }
   </style>
 </head>
@@ -172,7 +179,7 @@
           <span class="hs" id="hs-hard">Best 0</span>
         </button>
       </div>
-      <div class="how">Drag or hold to fly · Tap FIRE or press Space to breathe flame<br>On a computer: mouse, arrows or W/S, and Space</div>
+      <div class="how">Drag anywhere to fly · Hold a 🔥 FIRE button (one in each bottom corner) to breathe flame<br>Steer with one thumb and fire with the other! On a computer: mouse, arrows or W/S, and Space</div>
     </div>
 
     <div id="hud">
@@ -191,7 +198,8 @@
       </div>
     </div>
 
-    <button id="fireBtn" type="button" data-action="fire" aria-label="Breathe fire"><span class="emoji">🔥</span>FIRE</button>
+    <button id="fireL" class="fire-btn" type="button" data-action="fire" aria-label="Breathe fire (left)"><span class="emoji">🔥</span><span class="lbl">FIRE</span></button>
+    <button id="fireR" class="fire-btn" type="button" data-action="fire" aria-label="Breathe fire (right)"><span class="emoji">🔥</span><span class="lbl">FIRE</span></button>
     <div id="toast"></div>
 
     <div id="end">
@@ -255,7 +263,8 @@
     const menuEl = document.getElementById("menu");
     const endEl = document.getElementById("end");
     const hudEl = document.getElementById("hud");
-    const fireBtn = document.getElementById("fireBtn");
+    const fireBtns = [document.getElementById("fireL"), document.getElementById("fireR")];
+    function showFireBtns(on) { fireBtns.forEach(function (b) { b.style.display = on ? "flex" : "none"; }); }
     const scoreEl = document.getElementById("scoreEl");
     const distEl = document.getElementById("distEl");
     const heartsEl = document.getElementById("hearts");
@@ -277,6 +286,8 @@
     let shake = 0;
     let fireTimer = 0;
     let autoFireCd = 0;
+    let fireCount = 0;
+    let testNoDamage = false; // only ever set by the ?test hook
     let toastTimer = 0;
     let spawnX = 0;
     let section = 0;
@@ -293,8 +304,25 @@
       up: false,
       down: false,
       fire: false,
+      fireKey: false,
       fireQueued: false,
-      ids: new Map()
+      ids: new Map(),      // steering pointerId -> {x, y, t}
+      firePtrs: new Map()  // fire-button pointerId -> button element
+    };
+    function refreshFire() {
+      input.fire = input.fireKey || input.firePtrs.size > 0;
+      fireBtns.forEach(function (b) {
+        let held = false;
+        input.firePtrs.forEach(function (el) { if (el === b) held = true; });
+        b.classList.toggle("hot", held);
+      });
+    }
+    function latestSteer() {
+      // the most recently started steering finger wins, so a second steering
+      // finger never makes the dragon jitter between two spots
+      let best = null;
+      input.ids.forEach(function (v) { if (!best || v.t > best.t) best = v; });
+      return best;
     };
 
     let gems = [];
@@ -480,51 +508,63 @@
     window.addEventListener("orientationchange", function () { setTimeout(resize, 120); });
 
     /* ---------- Input ---------- */
-    function isFireEl(el) {
-      return el && (el === fireBtn || (el.closest && el.closest("#fireBtn")));
+    function fireElOf(el) {
+      return el && el.closest ? el.closest(".fire-btn") : null;
     }
     function isUiButton(el) {
-      return el && el.closest && el.closest("button") && !isFireEl(el);
+      return el && el.closest && el.closest("button") && !fireElOf(el);
     }
+    let steerSeq = 0;
 
+    // Steering: any touch that does NOT start on a button steers the dragon
+    // toward that finger's height. Each finger is tracked by pointerId.
     window.addEventListener("pointerdown", function (e) {
       if (state !== "play") return;
-      if (isFireEl(e.target) || isUiButton(e.target)) return;
-      input.ids.set(e.pointerId, "fly");
+      if (fireElOf(e.target) || isUiButton(e.target)) return;
+      if (input.firePtrs.has(e.pointerId)) return;
+      input.ids.set(e.pointerId, { x: e.clientX, y: e.clientY, t: ++steerSeq });
       input.pointer = true;
       input.px = e.clientX; input.py = e.clientY;
     });
     window.addEventListener("pointermove", function (e) {
-      if (!input.ids.has(e.pointerId)) return;
-      input.px = e.clientX; input.py = e.clientY;
+      const st = input.ids.get(e.pointerId);
+      if (!st) return;
+      st.x = e.clientX; st.y = e.clientY;
+      const cur = latestSteer();
+      if (cur) { input.px = cur.x; input.py = cur.y; }
     });
     function endPtr(e) {
-      const kind = input.ids.get(e.pointerId);
-      input.ids.delete(e.pointerId);
-      if (kind === "fly") {
-        let still = false;
-        input.ids.forEach(function (v) { if (v === "fly") still = true; });
-        input.pointer = still;
+      if (input.firePtrs.has(e.pointerId)) {
+        input.firePtrs.delete(e.pointerId);
+        refreshFire();
+      }
+      if (input.ids.has(e.pointerId)) {
+        input.ids.delete(e.pointerId);
+        const cur = latestSteer();
+        input.pointer = !!cur;
+        if (cur) { input.px = cur.x; input.py = cur.y; }
       }
     }
-    window.addEventListener("pointerup", endPtr);
-    window.addEventListener("pointercancel", endPtr);
+    window.addEventListener("pointerup", endPtr, true);
+    window.addEventListener("pointercancel", endPtr, true);
 
-    fireBtn.addEventListener("pointerdown", function (e) {
-      e.preventDefault(); e.stopPropagation();
-      input.fire = true;
-      input.fireQueued = true;
-      fireBtn.classList.add("hot");
+    // Fire buttons: a touch that starts here only breathes fire (never steers).
+    // Holding keeps firing at the normal fire rate.
+    fireBtns.forEach(function (btn) {
+      btn.addEventListener("pointerdown", function (e) {
+        e.preventDefault(); e.stopPropagation();
+        if (state !== "play") return;
+        SFX.unlock();
+        input.ids.delete(e.pointerId);
+        input.firePtrs.set(e.pointerId, btn);
+        input.fireQueued = true;
+        refreshFire();
+        try { btn.setPointerCapture(e.pointerId); } catch (err) {}
+      });
+      btn.addEventListener("lostpointercapture", endPtr);
+      btn.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+      btn.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); });
     });
-    fireBtn.addEventListener("pointerup", function () {
-      input.fire = false;
-      fireBtn.classList.remove("hot");
-    });
-    fireBtn.addEventListener("pointercancel", function () {
-      input.fire = false;
-      fireBtn.classList.remove("hot");
-    });
-    fireBtn.addEventListener("contextmenu", function (e) { e.preventDefault(); });
 
     window.addEventListener("keydown", function (e) {
       if (e.repeat) {
@@ -535,7 +575,7 @@
       if (e.code === "ArrowDown" || e.code === "KeyS") { input.down = true; e.preventDefault(); }
       if (e.code === "Space") {
         e.preventDefault();
-        if (state === "play") { input.fire = true; input.fireQueued = true; }
+        if (state === "play") { input.fireKey = true; input.fireQueued = true; refreshFire(); }
         else if (state === "end") startGame(mode.id);
         else if (state === "paused") resumeGame();
       }
@@ -548,7 +588,7 @@
     window.addEventListener("keyup", function (e) {
       if (e.code === "ArrowUp" || e.code === "KeyW") input.up = false;
       if (e.code === "ArrowDown" || e.code === "KeyS") input.down = false;
-      if (e.code === "Space") input.fire = false;
+      if (e.code === "Space") { input.fireKey = false; refreshFire(); }
     });
 
     const block = function (e) {
@@ -616,7 +656,7 @@
       menuEl.style.display = "flex";
       endEl.style.display = "none";
       hudEl.style.display = "none";
-      fireBtn.style.display = "none";
+      showFireBtns(false);
       toastEl.classList.remove("show");
       refreshHighScores();
     }
@@ -627,7 +667,7 @@
       menuEl.style.display = "none";
       endEl.style.display = "none";
       hudEl.style.display = "flex";
-      fireBtn.style.display = "flex";
+      showFireBtns(true);
       score = 0; combo = 0; comboTimer = 0;
       hearts = mode.hearts;
       invuln = 0; shake = 0; fireTimer = 0; autoFireCd = 0;
@@ -640,17 +680,17 @@
       dragon.wing = 0;
       dragon.fire = 0;
       dragon.hurt = 0;
-      input.pointer = false; input.up = false; input.down = false; input.fire = false;
-      input.ids.clear();
+      input.pointer = false; input.up = false; input.down = false; input.fire = false; input.fireKey = false;
+      input.ids.clear(); input.firePtrs.clear(); refreshFire();
       bootWorld();
       for (let i = 0; i < 4; i++) spawnAhead();
       updateHUD();
       SFX.start();
       startMusic();
       const tips = {
-        easy: "Drag to fly, little rider!",
-        normal: "Drag to steer · FIRE at gloom puffs!",
-        hard: "Hold steady — the wind is wild!"
+        easy: "Drag to fly, little rider!\n🔥 buttons breathe fire",
+        normal: "Drag to steer · hold a 🔥 button to blast gloom puffs!",
+        hard: "Steer with one thumb, 🔥 with the other!"
       };
       showToast(tips[mode.id], 1.6);
       document.getElementById("pauseBtn").textContent = "❚❚";
@@ -676,7 +716,7 @@
     function endGame(won) {
       state = "end";
       stopMusic();
-      fireBtn.style.display = "none";
+      showFireBtns(false);
       const prev = getHS(mode.id);
       const best = Math.max(prev, score);
       if (score > prev) setHS(mode.id, score);
@@ -887,6 +927,7 @@
       if (fireTimer > 0) return;
       fireTimer = 0.32;
       dragon.fire = 0.28;
+      fireCount++;
       SFX.fire();
       const ang = Math.atan2(dragon.vy, 220);
       for (let i = 0; i < 18; i++) {
@@ -943,6 +984,7 @@
     }
 
     function hitDragon() {
+      if (testNoDamage) return;
       if (invuln > 0 || !mode.damage) {
         if (!mode.damage) {
           burst(dragon.x + 20, dragon.y, "#fff4c8", 8, 120, 0.3);
@@ -966,6 +1008,37 @@
       const dx = px - (dragon.x + 20);
       const dy = py - dragon.y;
       return dx > 8 && dx < 155 && Math.abs(dy) < 50 + r;
+    }
+
+    // Forgiving steering: the finger only needs to reach just above the fire
+    // buttons to fly the dragon all the way down to the bottom lane.
+    function steerTargetY(py, margin) {
+      const btnH = fireBtns[1].offsetHeight || 88;
+      const reachBottom = Math.max(margin + 40, H - (btnH + 20) * 0.75);
+      const t = clamp((py - margin) / (reachBottom - margin), 0, 1);
+      return py <= margin ? py : margin + t * (H - 2 * margin);
+    }
+    // Fade a fire button when the dragon flies behind it so it never hides the action.
+    let fadeL = false, fadeR = false;
+    function updateFireFade() {
+      const fade = function (b) {
+        if (b.style.display === "none") return false;
+        const r = b.getBoundingClientRect();
+        return dragon.x + 60 > r.left - 10 && dragon.x - 60 < r.right + 10 && dragon.y + 40 > r.top - 10;
+      };
+      const l = fade(fireBtns[0]), r = fade(fireBtns[1]);
+      if (l !== fadeL) { fadeL = l; fireBtns[0].classList.toggle("faded", l); }
+      if (r !== fadeR) { fadeR = r; fireBtns[1].classList.toggle("faded", r); }
+    }
+
+    // Read-only peek for automated tests (only when the page URL has ?test).
+    if (/[?&]test\b/.test(location.search)) {
+      window.__ember = function () {
+        return { state: state, mode: mode.id, dragonY: dragon.y, dragonX: dragon.x, H: H, W: W,
+          fireCount: fireCount, fire: input.fire, steering: input.pointer, py: input.py,
+          steerIds: Array.from(input.ids.keys()), firePtrs: Array.from(input.firePtrs.keys()) };
+      };
+      window.__emberNoDamage = function () { testNoDamage = true; };
     }
 
     function update(dt) {
@@ -994,24 +1067,34 @@
 
       const margin = Math.max(50, H * 0.08);
       let target = null;
-      if (input.pointer) target = input.py;
+      if (input.pointer) target = steerTargetY(input.py, margin);
       if (input.up) target = (target == null ? dragon.y : target) - 240 * dt * 10;
       if (input.down) target = (target == null ? dragon.y : target) + 240 * dt * 10;
 
       if (target != null) {
         const desired = clamp(target, margin, H - margin);
-        const ay = (desired - dragon.y) * 8.5 * cfg.lerp * 10;
+        const k = 8.5 * cfg.lerp * 10;
+        const ay = (desired - dragon.y) * k;
         dragon.vy += ay * dt;
-        dragon.vy *= Math.pow(0.18, dt);
+        if (input.pointer && !input.up && !input.down) {
+          // finger steering: near-critically damped so the dragon glides to
+          // the finger smoothly instead of bouncing past it
+          dragon.vy *= Math.exp(-1.6 * Math.sqrt(k) * dt);
+        } else {
+          dragon.vy *= Math.pow(0.18, dt);
+        }
       } else {
         dragon.vy += cfg.gravity * 0.35 * dt;
       }
-      dragon.vy = clamp(dragon.vy, -cfg.maxVy, cfg.maxVy);
+      // tall portrait screens get a bit more climb/dive speed so the dragon keeps up with the finger
+      const vyCap = cfg.maxVy * clamp(H / 600, 1, 1.4);
+      dragon.vy = clamp(dragon.vy, -vyCap, vyCap);
       dragon.y += dragon.vy * dt;
       dragon.y = clamp(dragon.y, margin, H - margin);
       if (dragon.y <= margin || dragon.y >= H - margin) dragon.vy *= 0.3;
 
       dragon.wing += dt * (input.pointer || input.up ? 14 : 7);
+      updateFireFade();
       dragon.blink -= dt;
       if (dragon.blink < -2 && Math.random() < 0.01) dragon.blink = 0.12;
       if (dragon.hurt > 0) dragon.hurt -= dt;
