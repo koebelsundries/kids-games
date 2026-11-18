@@ -1,6 +1,6 @@
 /* Emberwing offline cache. This file lives at emberwing/sw.js, so every
    relative URL below resolves inside emberwing/ (not the site root). */
-const CACHE = "emberwing-v4"; // new name so emberwing-pixel-* and older emberwing caches are dropped
+const CACHE = "emberwing-v5"; // new name so emberwing-pixel-* and older emberwing caches are dropped
 const CORE = [
   "./",
   "./index.html",
