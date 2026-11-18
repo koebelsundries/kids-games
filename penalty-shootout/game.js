@@ -120,6 +120,8 @@ import * as THREE from "./vendor/three.module.min.js";
 
   const GOAL_W = 7.32, GOAL_H = 2.44, GOAL_D = 2.0;
   const SPOT_Z = 11;
+  const KICKER_FACING = Math.PI; // face -z, toward the goal
+  const KEEPER_FACING = 0;       // face +z, toward the field
   const BALL_R = 0.15;
   let goalW = GOAL_W, goalH = GOAL_H;
 
@@ -277,7 +279,7 @@ import * as THREE from "./vendor/three.module.min.js";
     tx: 0, ty: 0,
     dive: 0, side: 0, height: 0,
     decided: false, decideIn: 0,
-    pose: "idle", t: 0, sleepy: 0
+    pose: "idle", t: 0, sleepy: 0, center: false
   };
 
   const aim = {
@@ -285,7 +287,7 @@ import * as THREE from "./vendor/three.module.min.js";
     sx: 0, sy: 0, st: 0,
     x: 0, y: 0,
     pts: [],
-    power: 0, curve: 0, dirX: 0, dirY: 0
+    power: 0, curve: 0, dirX: 0, dirY: 0, dove: false
   };
 
   let confetti = [];
@@ -807,11 +809,14 @@ import * as THREE from "./vendor/three.module.min.js";
 
   function resetPlayers() {
     kicker.position.set(-1.15, 0, SPOT_Z + 1.55);
-    kicker.rotation.set(0, 0, 0);
+    // Models are built with the face on local +z. The goal sits at z=0 and the
+    // spot at z=+11, so the kicker turns around (PI) to face the goal and the
+    // keeper keeps rotation 0 to face out toward the field and the kicker.
+    kicker.rotation.set(0, KICKER_FACING, 0);
     kicker.scale.setScalar(1);
     const sleepySide = mode.sleepy ? pick([-1, 1]) * rand(1.6, 2.4) : 0;
     goalie.position.set(sleepySide, 0, 0.62);
-    goalie.rotation.set(0, Math.PI, 0);
+    goalie.rotation.set(0, KEEPER_FACING, 0);
     goalie.scale.setScalar(1.05);
     goalieAnim.x = sleepySide;
     kickerAnim.t = 0;
@@ -822,7 +827,9 @@ import * as THREE from "./vendor/three.module.min.js";
     goalieAnim.ty = 0;
     goalieAnim.dive = 0;
     goalieAnim.side = 0;
+    goalieAnim.center = false;
     goalieAnim.height = 0;
+    if (diveMarker) diveMarker.visible = false;
     goalieAnim.decided = false;
     goalieAnim.decideIn = 0;
     goalieAnim.pose = "idle";
@@ -866,8 +873,8 @@ import * as THREE from "./vendor/three.module.min.js";
     ud.head.rotation.z = sleepy ? Math.sin(t * 0.7) * 0.1 : 0;
     ud.arms.L.arm.rotation.x = sleepy ? 0.4 : 0.15 + Math.sin(t * 2.2) * 0.05;
     ud.arms.R.arm.rotation.x = sleepy ? 0.4 : 0.15 + Math.sin(t * 2.2 + 1) * 0.05;
-    ud.arms.L.arm.rotation.z = sleepy ? 0.15 : 0.35;
-    ud.arms.R.arm.rotation.z = sleepy ? -0.15 : -0.35;
+    ud.arms.L.arm.rotation.z = sleepy ? -0.08 : -0.18;
+    ud.arms.R.arm.rotation.z = sleepy ? 0.08 : 0.18;
     ud.arms.L.low.rotation.x = sleepy ? 0.3 : 0.25;
     ud.arms.R.low.rotation.x = sleepy ? 0.3 : 0.25;
     ud.legs.L.leg.rotation.x = 0;
@@ -885,13 +892,16 @@ import * as THREE from "./vendor/three.module.min.js";
     ud.hip.position.y = 0.62;
     ud.hip.rotation.y = -0.15;
     ud.head.rotation.x = -0.1;
-    ud.arms.L.arm.rotation.x = -0.4;
-    ud.arms.R.arm.rotation.x = 0.5;
-    ud.arms.L.arm.rotation.z = 0.5;
-    ud.arms.R.arm.rotation.z = -0.7;
-    ud.legs.L.leg.rotation.x = 0.15;
-    ud.legs.R.leg.rotation.x = swing;
-    ud.legs.R.shin.rotation.x = k < 0.55 ? 0.8 : lerp(0.8, 0.1, (k - 0.55) / 0.45);
+    // Facing the goal, the model's "L" limbs (local -x) sit on the ball side,
+    // so "L" is the kicking leg and the opposite ("R") arm swings forward.
+    ud.arms.R.arm.rotation.x = -0.4;
+    ud.arms.L.arm.rotation.x = 0.5;
+    ud.arms.R.arm.rotation.z = 0.6;
+    ud.arms.L.arm.rotation.z = -0.7;
+    ud.legs.R.leg.rotation.x = 0.15;
+    ud.legs.R.shin.rotation.x = 0;
+    ud.legs.L.leg.rotation.x = swing;
+    ud.legs.L.shin.rotation.x = k < 0.55 ? 0.8 : lerp(0.8, 0.1, (k - 0.55) / 0.45);
     person.position.z = SPOT_Z + 1.55 - plant * 1.25;
     person.position.x = -1.15 + plant * 0.95;
   }
@@ -899,20 +909,20 @@ import * as THREE from "./vendor/three.module.min.js";
   function poseDive(person, anim) {
     const ud = person.userData;
     const k = clamp(anim.dive, 0, 1);
-    const side = anim.side || Math.sign(anim.tx) || 1;
+    const side = anim.side === 0 && anim.center ? 0 : (anim.side || Math.sign(anim.tx) || 1);
     person.position.x = anim.x;
     person.position.y = anim.y;
     person.position.z = anim.z;
     person.rotation.x = 0;
-    person.rotation.y = Math.PI;
-    person.rotation.z = side * k * 1.05;
+    person.rotation.y = KEEPER_FACING;
+    person.rotation.z = -side * k * 1.05;
     ud.hip.position.y = 0.62;
     ud.head.rotation.x = -0.15;
     ud.head.rotation.z = 0;
-    ud.arms.L.arm.rotation.z = 1.2 * (side < 0 ? 1.4 : 0.4);
-    ud.arms.R.arm.rotation.z = -1.2 * (side > 0 ? 1.4 : 0.4);
-    ud.arms.L.arm.rotation.x = -0.6 - k * 0.4;
-    ud.arms.R.arm.rotation.x = -0.6 - k * 0.4;
+    ud.arms.L.arm.rotation.z = side === 0 ? -0.5 - k * 0.6 : -1.2 * (side < 0 ? 1.9 : 0.6);
+    ud.arms.R.arm.rotation.z = side === 0 ? 0.5 + k * 0.6 : 1.2 * (side > 0 ? 1.9 : 0.6);
+    ud.arms.L.arm.rotation.x = -0.3 - k * 0.3;
+    ud.arms.R.arm.rotation.x = -0.3 - k * 0.3;
     ud.arms.L.low.rotation.x = 0.1;
     ud.arms.R.low.rotation.x = 0.1;
     ud.legs.L.leg.rotation.x = 0.4;
@@ -924,10 +934,10 @@ import * as THREE from "./vendor/three.module.min.js";
     ud.hip.position.y = 0.55 + Math.sin(t * 3) * 0.02;
     ud.head.rotation.x = -0.05;
     ud.head.rotation.z = 0;
-    ud.arms.L.arm.rotation.x = 0.2;
-    ud.arms.R.arm.rotation.x = 0.2;
-    ud.arms.L.arm.rotation.z = 1.05;
-    ud.arms.R.arm.rotation.z = -1.05;
+    ud.arms.L.arm.rotation.x = -0.35;
+    ud.arms.R.arm.rotation.x = -0.35;
+    ud.arms.L.arm.rotation.z = -0.75;
+    ud.arms.R.arm.rotation.z = 0.75;
     ud.legs.L.leg.rotation.x = 0.35;
     ud.legs.R.leg.rotation.x = 0.35;
     ud.legs.L.shin.rotation.x = 0.5;
@@ -942,9 +952,11 @@ import * as THREE from "./vendor/three.module.min.js";
     const aspect = W / Math.max(1, H);
     const portrait = aspect < 0.85;
     if (camMode === "keep") {
+      // Raised view from behind the net that shows BOTH posts, the keeper and
+      // the striker, so kids can see every shot and tap anywhere in the goal.
       return portrait
-        ? { x: 0, y: 1.95, z: -5.0, lx: 0, ly: 1.1, lz: 10, fov: 44 }
-        : { x: 0, y: 1.75, z: -4.0, lx: 0, ly: 1.05, lz: 10, fov: 38 };
+        ? { x: 0, y: 8.5, z: -6.3, lx: 0, ly: 0.5, lz: 4.2, fov: 84 }
+        : { x: 0, y: 4.2, z: -6.2, lx: 0, ly: 0.8, lz: 6, fov: 50 };
     }
     if (portrait) return { x: 0.2, y: 2.45, z: 16.8, lx: 0, ly: 1.15, lz: 2.5, fov: 72 };
     return { x: 0.2, y: 2.05, z: 16.0, lx: 0, ly: 1.25, lz: 2.2, fov: 34 };
@@ -955,17 +967,19 @@ import * as THREE from "./vendor/three.module.min.js";
     applyCam();
   }
 
+  let freezeCam = null;
   function applyCam() {
     if (!camera) return;
-    camera.position.set(cam.x, cam.y, cam.z);
-    camera.lookAt(cam.lx, cam.ly, cam.lz);
-    camera.fov = cam.fov;
+    const c = freezeCam || cam;
+    camera.position.set(c.x, c.y, c.z);
+    camera.lookAt(c.lx, c.ly, c.lz);
+    camera.fov = c.fov;
     camera.updateProjectionMatrix();
   }
 
   function updateCamera(dt) {
     const d = desiredCamera();
-    if (state === "flight") {
+    if (state === "flight" && camMode !== "keep") {
       d.lx = lerp(d.lx, ball.x, 0.45);
       d.ly = lerp(d.ly, clamp(ball.y, 0.6, 2.4), 0.4);
       d.lz = lerp(d.lz, clamp(ball.z, 0.5, 9), 0.35);
@@ -1148,7 +1162,7 @@ import * as THREE from "./vendor/three.module.min.js";
         ball.vx *= 0.7; ball.vy *= 0.6; ball.vz *= -0.15;
       }
 
-      if (ball.z < -8 || Math.abs(ball.x) > 30 || (ball.y <= BALL_R + 0.01 && Math.hypot(ball.vx, ball.vz) < 0.4 && ball.z < 8 && event)) {
+      if (ball.z < -8 || Math.abs(ball.x) > 30 || (ball.y <= BALL_R + 0.01 && Math.hypot(ball.vx, ball.vz) < 0.4 && (event || Math.abs(ball.vy) < 0.05))) {
         ball.flying = false;
       }
     }
@@ -1221,7 +1235,7 @@ import * as THREE from "./vendor/three.module.min.js";
 
   function updateKicker(dt) {
     if (kickerAnim.kicking) {
-      kickerAnim.t += dt / (mode.id === "easy" ? 0.28 : 0.36);
+      kickerAnim.t += dt / (mode.id === "easy" ? 0.28 : mode.role === "keep" ? 0.9 : 0.36);
       poseKick(kicker, clamp(kickerAnim.t, 0, 1));
       if (kickerAnim.t >= 0.55 && pendingShot && !ball.flying && state === "kicking") {
         launchBall(pendingShot);
@@ -1281,7 +1295,13 @@ import * as THREE from "./vendor/three.module.min.js";
     aim.sy = aim.y = e.clientY;
     aim.st = performance.now();
     aim.pts = [{ x: e.clientX, y: e.clientY }];
+    aim.dove = false;
     try { touchEl.setPointerCapture(e.pointerId); } catch (err) {}
+    if (mode.role === "keep") {
+      // React right away: the keeper heads for the spot you touched.
+      keeperTap(e.clientX, e.clientY);
+      return;
+    }
     if (mode.role === "shoot" && state === "ready") {
       powerWrap.classList.add("show");
       powerFill.style.height = "0%";
@@ -1295,6 +1315,10 @@ import * as THREE from "./vendor/three.module.min.js";
     if (!last || Math.hypot(e.clientX - last.x, e.clientY - last.y) > 6) {
       aim.pts.push({ x: e.clientX, y: e.clientY });
       if (aim.pts.length > 48) aim.pts.splice(0, aim.pts.length - 48);
+    }
+    if (mode.role === "keep") {
+      if (Math.hypot(aim.x - aim.sx, aim.y - aim.sy) > 28) keeperSwipe();
+      return;
     }
     if (mode.role === "shoot" && state === "ready") {
       const a = computeAim();
@@ -1314,7 +1338,7 @@ import * as THREE from "./vendor/three.module.min.js";
     powerWrap.classList.remove("show");
     if (mode.role === "keep") {
       pathLine.visible = false;
-      if (state === "ready" || state === "kicking" || state === "flight") tryDive(a);
+      if (Math.hypot(aim.x - aim.sx, aim.y - aim.sy) > 28) keeperSwipe();
       return;
     }
     if (state !== "ready") { pathLine.visible = false; return; }
@@ -1325,19 +1349,113 @@ import * as THREE from "./vendor/three.module.min.js";
     beginKick(shotFromSwipe(a.power, a.dirX, a.dirY, a.curve));
   }
 
-  function tryDive(a) {
-    if (goalieAnim.pose === "dive" && goalieAnim.dive > 0.2) return;
-    const dirX = a.dirX !== 0 || a.dist > 20 ? a.dirX : (aim.sx < W / 2 ? -0.8 : 0.8);
-    const dirY = Math.max(0, a.dirY);
-    const dist = lerp(1.2, goalW / 2 + 0.3, clamp(Math.abs(dirX), 0, 1));
-    goalieAnim.tx = Math.sign(dirX || (aim.sx < W / 2 ? -1 : 1)) * dist;
-    if (Math.abs(dirX) < 0.15 && dirY < 0.35) goalieAnim.tx = 0;
-    goalieAnim.ty = lerp(0.4, goalH + 0.1, clamp(dirY, 0, 1));
-    goalieAnim.side = Math.sign(goalieAnim.tx) || 1;
-    goalieAnim.height = clamp(goalieAnim.ty / goalH, 0, 1);
+  // ---- Be the Keeper controls ----
+  // Tap anywhere: the keeper dives to that spot in the goal.
+  // Swipe: the keeper dives the way you swipe (left/right, up for high).
+  // You can change your mind until the ball reaches the goal line.
+  const raycaster = new THREE.Raycaster();
+  const ndc = new THREE.Vector2();
+  const tmpV = new THREE.Vector3();
+  const keeperPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+
+  function canKeeperMove() {
+    if (mode.role !== "keep") return false;
+    if (state === "ready" || state === "kicking") return true;
+    return state === "flight" && ball.z > 0.15;
+  }
+
+  function screenToGoal(sx, sy) {
+    if (!camera) return null;
+    ndc.set((sx / W) * 2 - 1, -(sy / H) * 2 + 1);
+    raycaster.setFromCamera(ndc, camera);
+    keeperPlane.constant = 0; // the goal line, where the ball crosses
+    const hit = raycaster.ray.intersectPlane(keeperPlane, tmpV);
+    if (!hit) return null;
+    return { x: hit.x, y: hit.y };
+  }
+
+  // +1 if moving right on screen means +x in the world, -1 if it is flipped
+  // (it is flipped in the keeper camera, which looks out from behind the net).
+  function screenRightSign() {
+    if (!camera) return 1;
+    const e = camera.matrixWorld.elements;
+    return e[0] >= 0 ? 1 : -1;
+  }
+
+  function keeperDiveTo(x, y) {
+    const maxX = goalW / 2 + 0.3;
+    const tx = clamp(x, -maxX, maxX);
+    const ty = clamp(y, 0.3, goalH + 0.1);
+    const center = Math.abs(tx) < 0.55;
+    goalieAnim.tx = center ? tx * 0.5 : tx;
+    goalieAnim.ty = ty;
+    goalieAnim.center = center;
+    goalieAnim.side = center ? 0 : Math.sign(tx);
+    goalieAnim.height = clamp(ty / goalH, 0, 1);
     goalieAnim.decided = true;
+    if (goalieAnim.pose !== "dive") SFX.dive();
     goalieAnim.pose = "dive";
-    SFX.dive();
+    showDiveMarker(goalieAnim.tx, ty);
+  }
+
+  function keeperTap(sx, sy) {
+    if (!canKeeperMove()) return;
+    const g = screenToGoal(sx, sy);
+    if (!g) return;
+    keeperDiveTo(g.x, g.y);
+    aim.dove = true;
+  }
+
+  function keeperSwipe(a) {
+    if (!canKeeperMove()) return;
+    const dx = aim.x - aim.sx;
+    const dy = aim.y - aim.sy;
+    const horiz = Math.abs(dx) / Math.max(1, Math.abs(dx) + Math.abs(dy));
+    const up = clamp(-dy / (H * 0.25), 0, 1);
+    let x;
+    if (horiz < 0.3) x = 0;
+    else x = Math.sign(dx) * screenRightSign() * lerp(1.6, goalW / 2 + 0.2, clamp(Math.abs(dx) / (W * 0.3), 0, 1));
+    const y = lerp(0.5, goalH, up);
+    keeperDiveTo(x, y);
+    aim.dove = true;
+  }
+
+  let diveMarker = null;
+  let diveMarkerT = 0;
+  function showDiveMarker(x, y) {
+    if (!scene) return;
+    if (!diveMarker) {
+      diveMarker = new THREE.Mesh(
+        new THREE.RingGeometry(0.22, 0.32, 24),
+        new THREE.MeshBasicMaterial({ color: 0xfff27a, transparent: true, opacity: 0.9, depthTest: false, side: THREE.DoubleSide })
+      );
+      diveMarker.renderOrder = 10;
+      scene.add(diveMarker);
+    }
+    diveMarker.position.set(x, clamp(y, 0.3, goalH), 0.05);
+    diveMarker.visible = true;
+    diveMarkerT = 0.9;
+  }
+  function updateDiveMarker(dt) {
+    if (!diveMarker || !diveMarker.visible) return;
+    diveMarkerT -= dt;
+    diveMarker.material.opacity = clamp(diveMarkerT / 0.9, 0, 1) * 0.9;
+    diveMarker.scale.setScalar(1 + (0.9 - diveMarkerT) * 0.6);
+    if (diveMarkerT <= 0 || mode.role !== "keep") diveMarker.visible = false;
+  }
+
+  let keeperKickIn = 0;
+  let keeperKickFor = -1;
+  function updateKeeperKickoff(dt) {
+    if (mode.role !== "keep" || state !== "ready" || keeperKickFor !== kicksTaken || keeperKickIn <= 0) return;
+    keeperKickIn -= dt;
+    if (keeperKickIn <= 0) {
+      pendingShot = computerShot();
+      kickerAnim.kicking = true;
+      kickerAnim.t = 0;
+      state = "kicking";
+      setHint("Here it comes!");
+    }
   }
 
   function beginKick(shot) {
@@ -1349,19 +1467,53 @@ import * as THREE from "./vendor/three.module.min.js";
     setHint("");
   }
 
+  // The striker in Be the Keeper always aims at a real spot inside the goal
+  // (low/mid/high, left/centre/right) at a kid-friendly speed that ramps up a
+  // little each shot. The velocity is solved against the same flight model the
+  // ball uses, so it really arrives where it was aimed.
+  let lastShotSides = [];
   function computerShot() {
-    const spots = [
-      [-0.85, 0.22], [0.85, 0.2], [0, 0.78], [-0.7, 0.7], [0.72, 0.66],
-      [-0.95, 0.45], [0.4, 0.3], [-0.3, 0.88], [0.9, 0.8], [0, 0.4]
-    ];
-    const s = spots[kicksTaken % spots.length];
-    const jitter = 0.08;
-    return shotFromSwipe(
-      rand(0.55, 0.88),
-      s[0] + rand(-jitter, jitter),
-      s[1] + rand(-jitter, jitter),
-      rand(-0.45, 0.45)
-    );
+    const cols = [-0.78, -0.5, 0, 0.5, 0.78];
+    const rows = [0.18, 0.45, 0.72];
+    let col = pick(cols);
+    const recent = lastShotSides.slice(-2);
+    if (recent.length === 2 && recent[0] === recent[1] && Math.sign(col) === recent[0]) col = -col;
+    lastShotSides.push(Math.sign(col));
+    const row = pick(rows);
+    const tx = col * (goalW / 2) + rand(-0.15, 0.15);
+    const ty = lerp(0.35, goalH - 0.35, row) + rand(-0.1, 0.1);
+    const ramp = Math.min(kicksTaken, 6) * 0.9;
+    const speed = rand(15.5, 18) + ramp;
+    const crv = rand(-0.25, 0.25);
+    const wx = -3, wy = crv * 28, wz = crv * -6;
+    const dz = 0 - SPOT_Z;
+    const dist = Math.hypot(tx, ty - BALL_R, dz);
+    const vz = (dz / dist) * speed;
+    const tGuess = SPOT_Z / Math.abs(vz);
+    let vx = tx / tGuess;
+    let vy = (ty - BALL_R + 0.5 * 9.8 * tGuess * tGuess) / tGuess;
+    // Same integrator as stepBall (minus ground bounces) to land on target.
+    function crossAt(vx0, vy0) {
+      let x = 0, y = BALL_R, z = SPOT_Z, a = vx0, b = vy0, c = vz;
+      const h = 0.008;
+      for (let i = 0; i < 600; i++) {
+        const pz = z, px = x, py = y;
+        a += (wy * c - wz * b) * 0.085 * h;
+        b += (wz * a - wx * c) * 0.085 * h;
+        c += (wx * b - wy * a) * 0.085 * h;
+        b -= 9.8 * h;
+        x += a * h; y += b * h; z += c * h;
+        if (z <= 0) { const t = pz / (pz - z); return { x: lerp(px, x, t), y: lerp(py, y, t) }; }
+      }
+      return null;
+    }
+    for (let it = 0; it < 8; it++) {
+      const hit = crossAt(vx, vy);
+      if (!hit) break;
+      vx += (tx - hit.x) / tGuess;
+      vy += (ty - hit.y) / tGuess;
+    }
+    return { vx, vy, vz, wx, wy, wz, power: 0.5, curve: crv, aimX: tx, aimY: ty };
   }
 
   function updateHSLabels() {
@@ -1445,6 +1597,7 @@ import * as THREE from "./vendor/three.module.min.js";
 
   function startMatch() {
     kicksTaken = 0;
+    lastShotSides = [];
     kicksMax = mode.kicks;
     scoreA = 0;
     scoreB = 0;
@@ -1530,14 +1683,10 @@ import * as THREE from "./vendor/three.module.min.js";
     rollWind();
     updateBoard();
     if (mode.role === "keep") {
-      setHint("Swipe to dive!");
-      window.setTimeout(function () {
-        if (state !== "ready" || paused) return;
-        pendingShot = computerShot();
-        kickerAnim.kicking = true;
-        kickerAnim.t = 0;
-        state = "kicking";
-      }, 700);
+      setHint(kicksTaken === 0 ? "Tap where to dive — or swipe left or right!" : "Get ready… tap or swipe to dive!");
+      const myShot = kicksTaken;
+      keeperKickIn = kicksTaken === 0 ? 2.4 : 1.6;
+      keeperKickFor = myShot;
     } else {
       const who = mode.id === "two"
         ? currentShooter().short + ": swipe to shoot!"
@@ -1831,8 +1980,10 @@ import * as THREE from "./vendor/three.module.min.js";
       flags.forEach(function (fl, i) {
         fl.rotation.y = Math.sin(clockDummy.t * 2.5 + i + windX) * (0.4 + Math.abs(windX) * 0.08);
       });
+      updateKeeperKickoff(dt);
       updateKicker(dt);
       updateGoalie(dt);
+      updateDiveMarker(dt);
       const ev = stepBall(dt);
       if (ev) resolveEvent(ev);
       if (state === "flight" && !ball.flying) {
@@ -1937,7 +2088,14 @@ import * as THREE from "./vendor/three.module.min.js";
       get windX() { return windX; },
       get team() { return teamA && teamA.id; },
       get flying() { return ball.flying; },
-      get paused() { return paused; }
+      get paused() { return paused; },
+      get keeperX() { return goalie ? goalie.position.x : 0; },
+      get keeperDive() { return goalieAnim.dive; },
+      get keeperTarget() { return { x: goalieAnim.tx, y: goalieAnim.ty, decided: goalieAnim.decided }; },
+      get ballPos() { return { x: ball.x, y: ball.y, z: ball.z }; },
+      get shotAim() { return pendingShot ? { x: pendingShot.aimX, y: pendingShot.aimY } : null; },
+      get hint() { return hintEl.textContent; },
+      _debug: { THREE: THREE, get kicker() { return kicker; }, get goalie() { return goalie; }, get camera() { return camera; }, get cam() { return cam; }, setCamFreeze: function (c) { freezeCam = c; } }
     };
   }
 
