@@ -7,11 +7,13 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Emberwing" />
-  <meta name="theme-color" content="#1a3a6a" />
-  <meta name="description" content="Emberwing - a cozy dragon-rider flying game" />
+  <meta name="theme-color" content="#197ed2" />
+  <meta name="description" content="Emberwing - a 16-bit style dragon-rider flying game" />
   <meta name="format-detection" content="telephone=no" />
   <title>Emberwing</title>
   <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="preload" href="fonts/PressStart2P-Regular.ttf" as="font" type="font/ttf" crossorigin />
+  <link rel="preload" href="assets/sprites.png" as="image" />
   <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png" />
   <link rel="icon" href="../icons/favicon.ico" sizes="48x48" />
   <link rel="apple-touch-icon" sizes="180x180" href="../icons/apple-touch-icon.png" />
@@ -200,6 +202,88 @@
       .mode-btn .hs { white-space: normal; }
       .fire-btn { width: 92px; height: 92px; }
     }
+    /* ================= Pixel-art skin ================= */
+    @font-face {
+      font-family: "Press Start 2P";
+      src: url("fonts/PressStart2P-Regular.ttf") format("truetype");
+      font-display: swap;
+    }
+    html, body { font-family: "Press Start 2P", "Courier New", monospace; background: #197ed2; }
+    canvas {
+      inset: 0 auto auto 0; width: auto; height: auto;
+      -ms-interpolation-mode: nearest-neighbor; image-rendering: crisp-edges; image-rendering: pixelated;
+    }
+    button { font-family: inherit; font-weight: 400; letter-spacing: 0; }
+    button:active { transform: translateY(2px); }
+    button:focus-visible { outline: 3px dashed #ffe08a; outline-offset: 5px; }
+    /* chunky pixel border: notched corners drawn with hard box-shadows (no blur, no radius) */
+    .px-box, .mode-btn, .end-btn, .icon-btn, .home-link, .fire-btn {
+      border: 0; border-radius: 0;
+      box-shadow:
+        0 -4px 0 0 #1a1030, 0 4px 0 0 #1a1030, -4px 0 0 0 #1a1030, 4px 0 0 0 #1a1030,
+        inset -4px -4px 0 0 rgba(0,0,0,.28), inset 4px 4px 0 0 rgba(255,255,255,.32);
+      backdrop-filter: none; text-shadow: 2px 2px 0 rgba(0,0,0,.45);
+    }
+    .icon-btn { width: 44px; height: 44px; margin: 4px; background: #2a4a8a; font-size: 18px; }
+    #iconBtns { gap: 10px; }
+    .home-link { background: #2a4a8a; font-size: 10px; min-height: 44px; padding: 0 12px; top: calc(14px + var(--safe-t)); left: calc(16px + var(--safe-l)); }
+    .menu-mute { top: calc(14px + var(--safe-t)); right: calc(16px + var(--safe-r)); }
+    .title {
+      font-size: clamp(24px, 8.2vw, 56px); font-weight: 400; letter-spacing: 0; line-height: 1.1;
+      color: #ffe08a; text-shadow: 3px 3px 0 #e0581c, 6px 6px 0 #5a1a08;
+    }
+    .title .px-sub { display: block; font-size: 0.42em; margin-top: 10px; color: #bfeaff; text-shadow: 2px 2px 0 #1a3a8a, 4px 4px 0 #0a1440; letter-spacing: .3em; }
+    .tag { font-size: 10px; line-height: 1.6; font-weight: 400; margin: 14px 0 18px; text-shadow: 2px 2px 0 #0a1440; }
+    .modes { gap: 16px; width: min(420px, calc(100% - 12px)); }
+    .mode-btn { padding: 12px 12px 12px 10px; gap: 10px; }
+    .mode-btn .ico { font-size: 26px; width: 38px; }
+    .mode-btn .name { font-size: 14px; line-height: 1.3; }
+    .mode-btn .desc { font-size: 8px; line-height: 1.6; font-weight: 400; margin-top: 6px; }
+    .mode-btn .hs { font-size: 8px; font-weight: 400; }
+    #btn-easy { background: #2f9a58; }
+    #btn-normal { background: #2a62d4; }
+    #btn-hard { background: #d44518; }
+    .how { font-size: 8px; line-height: 1.9; font-weight: 400; margin-top: 18px; text-shadow: 2px 2px 0 #0a1440; }
+    #menu { background: linear-gradient(to bottom, rgba(10,20,64,0.10), rgba(10,20,64,0.45)); }
+    .score { font-size: 22px; font-weight: 400; text-shadow: 3px 3px 0 #0a1440; }
+    .sub { font-size: 8px; font-weight: 400; line-height: 1.6; text-shadow: 2px 2px 0 #0a1440; }
+    #hearts { font-size: 18px; text-shadow: none; }
+    #comboPop { font-size: 10px; font-weight: 400; text-shadow: 2px 2px 0 #5a1a08; }
+    .fire-btn {
+      width: 84px; height: 84px; background: #ff8a2a; color: #3a1000; font-size: 10px;
+      box-shadow:
+        0 -4px 0 0 #3a1000, 0 4px 0 0 #3a1000, -4px 0 0 0 #3a1000, 4px 0 0 0 #3a1000,
+        inset -6px -6px 0 0 #c4400c, inset 6px 6px 0 0 #ffd56a;
+      text-shadow: 1px 1px 0 #ffe9a8; gap: 6px;
+    }
+    .fire-btn::after { border-radius: 0; }
+    .fire-btn .emoji { font-size: 30px; filter: none; }
+    .fire-btn.hot { filter: brightness(1.2); transform: translateY(2px); }
+    @media (min-width: 700px) and (orientation: landscape) { .fire-btn { width: 88px; height: 88px; } .modes { width: min(820px, calc(100% - 12px)); } .mode-btn .desc { font-size: 8px; } }
+    .end-btn { padding: 14px 12px; font-size: 12px; line-height: 1.4; }
+    #btn-again, #btn-resume { background: #ff9a2a; color: #2a0e00; text-shadow: 1px 1px 0 rgba(255,255,255,.4); }
+    #btn-menu, #btn-pmenu { background: #2a62d4; }
+    #btn-allgames, #btn-endall { background: #2f9a58; }
+    #endActions, #pauseActions { gap: 16px; }
+    #end .big, #pauseMenu .big { font-size: clamp(20px, 7vw, 36px); font-weight: 400; line-height: 1.3; color: #ffe08a; text-shadow: 3px 3px 0 #e0581c, 6px 6px 0 #5a1a08; }
+    #end .result { font-size: 14px; font-weight: 400; margin: 8px 0; text-shadow: 2px 2px 0 #0a1440; }
+    #end .how { font-size: 9px; }
+    #pauseMenu .pause-sub { font-size: 9px; line-height: 1.6; font-weight: 400; margin: 10px 0 8px; text-shadow: 2px 2px 0 #0a1440; }
+    #end, #pauseMenu { background: rgba(10,16,48,0.72); }
+    #toast { font-size: clamp(16px, 5vw, 28px); font-weight: 400; line-height: 1.4; text-shadow: 3px 3px 0 #5a1a08; }
+    #cdNum { font-size: clamp(72px, 24vmin, 128px); font-weight: 400; color: #ffe08a; text-shadow: 6px 6px 0 #e0581c, 12px 12px 0 #5a1a08; }
+    #cdNum.go { font-size: clamp(48px, 16vmin, 96px); }
+    #cdTip { font-size: clamp(10px, 3vw, 14px); line-height: 1.7; font-weight: 400; text-shadow: 2px 2px 0 #0a1440; }
+    @media (max-height: 500px) {
+      #cdNum { font-size: 22vmin; } #cdNum.go { font-size: 16vmin; } #cdTip { font-size: 10px; }
+      #pauseActions .end-btn { padding: 10px 12px; font-size: 11px; }
+      #pauseMenu .big { font-size: 22px; }
+      .title { font-size: 30px; } .tag { margin: 8px 0 12px; }
+    }
+    @media (max-width: 520px) {
+      #hearts { top: calc(64px + var(--safe-t)); font-size: 16px; }
+      #comboPop { top: calc(94px + var(--safe-t)); }
+    }
   </style>
 </head>
 <body>
@@ -209,7 +293,7 @@
       <button class="icon-btn menu-mute" id="menuMute" type="button" data-action="mute" aria-label="Mute">🔊</button>
       <a class="home-link" id="menuHome" href="../" aria-label="All games">🏠 All Games</a>
       <h1 class="title">EMBERWING</h1>
-      <div class="tag">A dragon-rider adventure</div>
+      <div class="tag">A 16-bit dragon-rider adventure</div>
       <div class="modes">
         <button class="mode-btn" id="btn-easy" type="button" data-mode="easy">
           <span class="ico">🐣</span>
@@ -223,7 +307,7 @@
           <span class="ico">🐉</span>
           <span class="copy">
             <span class="name">Normal Ride</span>
-            <span class="desc">Collect skygems, dodge spires, and blast gloom puffs</span>
+            <span class="desc">Collect skygems, dodge spires, and blast gloom monsters</span>
           </span>
           <span class="hs" id="hs-normal">Best 0</span>
         </button>
@@ -284,15 +368,16 @@
     </div>
   </div>
 
+  <script src="assets/sprites.js"></script>
   <script>
   (function () {
     "use strict";
 
     const STORAGE = {
-      easy: "emberwing-v1-easy",
-      normal: "emberwing-v1-normal",
-      hard: "emberwing-v1-hard",
-      muted: "emberwing-v1-muted"
+      easy: "emberwing-pixel-v1-easy",
+      normal: "emberwing-pixel-v1-normal",
+      hard: "emberwing-pixel-v1-hard",
+      muted: "emberwing-pixel-v1-muted"
     };
 
     const MODES = {
@@ -344,6 +429,22 @@
     const muteBtns = [document.getElementById("menuMute"), document.getElementById("muteBtn")];
 
     let W = 0, H = 0, dpr = 1;
+    let ps = 2;               // CSS px per art px (whole device pixels per art px)
+    const SPR = window.EMBER_SPRITES;
+    const IMG = { sheet: new Image(), far: new Image(), hills: new Image() };
+    let assetsLeft = 3, assetsReady = false, assetErrors = 0;
+    Object.keys(IMG).forEach(function (k) {
+      IMG[k].onload = function () { if (--assetsLeft === 0) assetsReady = true; };
+      IMG[k].onerror = function () { assetErrors++; };
+    });
+    IMG.sheet.src = "assets/sprites.png";
+    IMG.far.src = "assets/bg-far.png";
+    IMG.hills.src = "assets/bg-hills.png";
+    const SKY = ["#0e4f9c", "#125fb2", "#166fc4", "#197ed2"];
+    // sprite placement relative to the dragon's logic point (CSS px)
+    const ANCHOR_DX = -10, ANCHOR_DY = -4;   // rider's tunic
+    const MOUTH_DX = 30, MOUTH_DY = -24;     // where the fire comes out
+    let dragonFrame = "fly0";
     let state = "menu";
     let mode = MODES.normal;
     let lastT = 0;
@@ -547,14 +648,16 @@
 
     /* ---------- Resize ---------- */
     function resize() {
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      dpr = window.devicePixelRatio || 1;
       W = Math.max(1, window.innerWidth);
       H = Math.max(1, window.innerHeight);
-      canvas.width = Math.round(W * dpr);
-      canvas.height = Math.round(H * dpr);
-      canvas.style.width = W + "px";
-      canvas.style.height = H + "px";
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const k = Math.max(1, Math.round(dpr * 2)); // device px per art px (integer => crisp)
+      ps = k / dpr;
+      canvas.width = Math.ceil(W / ps);
+      canvas.height = Math.ceil(H / ps);
+      canvas.style.width = (canvas.width * ps) + "px";
+      canvas.style.height = (canvas.height * ps) + "px";
+      ctx.imageSmoothingEnabled = false;
       if (state === "menu" && clouds.length === 0) bootWorld();
       dragon.x = Math.round(W * 0.24);
     }
@@ -762,7 +865,7 @@
       stopMusic();
       const tips = {
         easy: "Drag to fly, little rider!\n🔥 buttons breathe fire",
-        normal: "Drag to steer · hold a 🔥 button to blast gloom puffs!",
+        normal: "Drag to steer · hold a 🔥 button to blast gloom monsters!",
         hard: "Steer with one thumb, 🔥 with the other!"
       };
       // Countdown first: the scene shows and the dragon hovers (kids can already
@@ -927,6 +1030,7 @@
         s: rand(0.6, 1.5) * (layer === 0 ? 0.8 : 1.2),
         a: rand(0.45, 0.9),
         layer: layer,
+        kind: layer === 0 ? irand(0, 3) : irand(0, 2),
         bumps: [rand(28, 50), rand(36, 64), rand(24, 44), rand(20, 36)]
       };
     }
@@ -1005,15 +1109,17 @@
       const style = Math.random();
       if (style < 0.55) {
         const gapY = rand(H * 0.22 + gap / 2, H * 0.82 - gap / 2);
-        obstacles.push({ type: "spire", x: x, y: 0, w: rand(46, 64), h: gapY - gap / 2, from: "top" });
-        obstacles.push({ type: "spire", x: x, y: gapY + gap / 2, w: rand(46, 64), h: H, from: "bot" });
+        obstacles.push({ type: "spire", x: x, y: 0, w: 56, h: gapY - gap / 2, from: "top" });
+        obstacles.push({ type: "spire", x: x, y: gapY + gap / 2, w: 56, h: H, from: "bot" });
       } else if (style < 0.8) {
+        const big = Math.random() < 0.5;
         obstacles.push({
-          type: "rock", x: x, y: rand(H * 0.2, H * 0.75), r: rand(28, 46)
+          type: "rock", x: x, y: rand(H * 0.2, H * 0.75), r: big ? 44 : 30, big: big
         });
       } else {
+        const big = Math.random() < 0.55;
         obstacles.push({
-          type: "ruin", x: x, y: rand(H * 0.15, H * 0.7), w: rand(36, 52), h: rand(70, 130)
+          type: "ruin", x: x, y: rand(H * 0.15, H * 0.7), w: big ? 44 : 36, h: big ? 84 : 70, big: big
         });
       }
     }
@@ -1024,8 +1130,10 @@
         puffs.push({
           x: x + i * rand(40, 80),
           y: rand(H * 0.2, H * 0.78),
-          r: mode.id === "easy" ? 32 : 26,
-          hp: 1, bob: rand(0, 6), dead: false
+          // hitbox = the monster's furry body (wings and horns don't count)
+          r: SPR.monster.bodyR[mode.id === "easy" ? "mE" : "m"],
+          v: SPR.monster.variants[irand(0, SPR.monster.variants.length - 1)],
+          seed: rand(0, 100), hp: 1, bob: rand(0, 6), dead: false, popT: 0, frame: ""
         });
       }
     }
@@ -1059,7 +1167,7 @@
         const a = ang + rand(-0.35, 0.35);
         const s = rand(260, 520);
         particles.push({
-          x: dragon.x + 48, y: dragon.y + 4,
+          x: dragon.x + MOUTH_DX + 6, y: dragon.y + MOUTH_DY,
           vx: Math.cos(a) * s, vy: Math.sin(a) * s,
           life: rand(0.18, 0.34), max: 0.34,
           r: rand(4, 9), color: Math.random() < 0.5 ? "#ffd36a" : (Math.random() < 0.5 ? "#ff8a2a" : "#fff1c4"),
@@ -1070,13 +1178,14 @@
       puffs.forEach(function (p) {
         if (p.dead) return;
         const dx = p.x - worldX - (dragon.x + 20);
-        const dy = p.y - dragon.y;
+        const dy = p.y - (dragon.y + MOUTH_DY * 0.6);
         if (dx > 10 && dx < reach && Math.abs(dy) < 48 + p.r) popPuff(p);
       });
     }
 
     function popPuff(p) {
       p.dead = true;
+      p.popT = 0.2; // show the "pop!" frame for a moment
       const pts = 50 + Math.min(combo, 8) * 5;
       score += pts;
       combo++;
@@ -1131,7 +1240,7 @@
     function flameHits(px, py, r) {
       if (dragon.fire <= 0) return false;
       const dx = px - (dragon.x + 20);
-      const dy = py - dragon.y;
+      const dy = py - (dragon.y + MOUTH_DY * 0.6);
       return dx > 8 && dx < 155 && Math.abs(dy) < 50 + r;
     }
 
@@ -1163,17 +1272,22 @@
           fireCount: fireCount, fire: input.fire, steering: input.pointer, py: input.py,
           steerIds: Array.from(input.ids.keys()), firePtrs: Array.from(input.firePtrs.keys()),
           countdown: countdown, cdText: cdEl.style.display === "none" ? "" : cdNum.textContent, worldX: worldX, score: score,
-          hearts: hearts, gems: gems.length, obstacles: obstacles.length, puffs: puffs.length };
+          hearts: hearts, gems: gems.length, obstacles: obstacles.length, puffs: puffs.length,
+          dragonFrame: dragonFrame, wing: dragon.wing, flameOn: dragon.fire > 0, ps: ps,
+          canvasW: canvas.width, canvasH: canvas.height, assetsReady: assetsReady, assetErrors: assetErrors,
+          smoothing: ctx.imageSmoothingEnabled };
       };
       window.__emberNoDamage = function () { testNoDamage = true; };
       window.__emberEnd = function () { if (state === "play") endGame(false); };
+      window.__emberPuffs = function () { return puffs.map(function (p) { return { x: p.x - worldX, y: p.y + Math.sin(p.bob) * 8, r: p.r, v: p.v, dead: p.dead, frame: p.frame }; }); };
+      window.__emberObstacles = function () { return obstacles.map(function (o) { return { type: o.type, x: o.x - worldX, y: o.y, w: o.w, h: o.h, r: o.r, from: o.from }; }); };
     }
 
     function update(dt) {
       if (state === "menu") {
         worldX += 28 * dt;
-        const mx = Math.min(110, W * 0.16);
-        const my = Math.min(96, H * 0.16) + 8;
+        const mx = Math.max(84, Math.min(130, W * 0.16));
+        const my = Math.max(70, Math.min(110, H * 0.16));
         dragon.x = lerp(dragon.x || mx, mx, 0.08);
         dragon.y = lerp(dragon.y || my, my + Math.sin(worldX * 0.01) * 10, 0.1);
         dragon.vy = Math.cos(worldX * 0.01) * 12;
@@ -1282,8 +1396,9 @@
       for (let i = puffs.length - 1; i >= 0; i--) {
         const p = puffs[i];
         const px = p.x - cam;
-        if (p.dead || px < -80) { puffs.splice(i, 1); continue; }
+        if ((p.dead && !(p.popT > 0)) || px < -80) { puffs.splice(i, 1); continue; }
         p.bob += dt * 2.2;
+        if (p.dead) { p.popT -= dt; continue; }
         const py = p.y + Math.sin(p.bob) * 8;
         if (flameHits(px, py, p.r)) { popPuff(p); continue; }
         const dx = px - dragon.x, dy = py - dragon.y;
@@ -1326,10 +1441,17 @@
         return (cx - dx) * (cx - dx) + (cy - dy) * (cy - dy) < rr * rr;
       }
       if (o.type === "spire") {
-        const left = ox - o.w / 2 + 8, right = ox + o.w / 2 - 8;
-        const top = o.from === "top" ? -20 : o.y + 6;
-        const bot = o.from === "top" ? o.h - 6 : H + 20;
-        return dx + r > left && dx - r < right && dy + r > top && dy - r < bot;
+        // follow the tapered pixel art: narrow near the tip, full width below
+        const top = o.from === "top" ? -40 : o.y + 4;
+        const bot = o.from === "top" ? o.h - 4 : H + 40;
+        const yy = clamp(dy, top, bot);
+        const fromTip = o.from === "top" ? (o.h - yy) : (yy - o.y);
+        const rows = SPR.spireRows;
+        const row = clamp(Math.floor(fromTip / 2), 0, SPR.spireTile[1] - 1);
+        const hw = Math.max(4, rows[row] - 6); // half-width in CSS px (2 CSS px per art px), a bit forgiving
+        const cx = clamp(dx, ox - hw, ox + hw);
+        const ddx = dx - cx, ddy = dy - yy;
+        return ddx * ddx + ddy * ddy < (r - 2) * (r - 2);
       }
       if (o.type === "ruin") {
         const left = ox - o.w / 2 + 6, right = ox + o.w / 2 - 6;
@@ -1357,7 +1479,7 @@
       }
       for (let i = 0; i < clouds.length; i++) {
         const c = clouds[i];
-        const par = c.layer === 0 ? 0.15 : c.layer === 1 ? 0.28 : 0.5;
+        const par = c.layer === 0 ? 0.1 : c.layer === 1 ? 0.18 : 0.3;
         if (c.x - worldX * par < -300) {
           c.x = worldX * par + W + rand(40, 400);
           c.y = rand(0.06, 0.5) * H;
@@ -1377,540 +1499,185 @@
       extendRidge(ridges.near, worldX * 0.75 + W + 400);
     }
 
-    /* ---------- Draw ---------- */
+    /* ---------- Pixel-art draw ---------- */
+    // Everything is drawn 1:1 into a small backing canvas (1 canvas px = 1 art
+    // px) that CSS scales up by a whole number of device pixels, with
+    // smoothing off, so pixels stay square and crisp on every screen.
+    function ax(v) { return Math.round(v / ps); }
+    function spr(name, x, y) {
+      const f = SPR.frames[name];
+      ctx.drawImage(IMG.sheet, f.x, f.y, f.w, f.h, x, y, f.w, f.h);
+    }
+    function sprC(name, cx, cy) {
+      const f = SPR.frames[name];
+      spr(name, ax(cx) - (f.w >> 1), ax(cy) - (f.h >> 1));
+    }
+    function tileX(img, scroll, y) {
+      const w = img.width;
+      let x = -(Math.floor(scroll) % w);
+      if (x > 0) x -= w;
+      for (; x < canvas.width + 2; x += w) ctx.drawImage(img, x, y);
+    }
+    function currentDragonFrame() {
+      if (dragon.fire > 0) return SPR.dragon.fire;
+      const fl = SPR.dragon.flap;
+      const i = Math.floor(dragon.wing / (Math.PI * 2) * fl.length);
+      return fl[((i % fl.length) + fl.length) % fl.length];
+    }
+
     function draw() {
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.imageSmoothingEnabled = false;
+      const vw = canvas.width, vh = canvas.height;
+      ctx.fillStyle = SKY[SKY.length - 1];
+      ctx.fillRect(0, 0, vw, vh);
+      if (!assetsReady) return;
       const t = worldX;
-      const sx = shake ? rand(-shake, shake) : 0;
-      const sy = shake ? rand(-shake, shake) : 0;
+      const sx = shake ? Math.round(rand(-shake, shake) / ps) : 0;
+      const sy = shake ? Math.round(rand(-shake, shake) / ps) : 0;
       ctx.save();
       ctx.translate(sx, sy);
 
-      const sky = ctx.createLinearGradient(0, 0, 0, H);
-      sky.addColorStop(0, "#1b4c8c");
-      sky.addColorStop(0.45, "#4aa4e0");
-      sky.addColorStop(0.75, "#9ad4f0");
-      sky.addColorStop(1, "#ffe2a0");
-      ctx.fillStyle = sky;
-      ctx.fillRect(-10, -10, W + 20, H + 20);
-
-      const sunX = W * 0.82, sunY = H * 0.18;
-      const sunG = ctx.createRadialGradient(sunX, sunY, 10, sunX, sunY, 90);
-      sunG.addColorStop(0, "rgba(255,244,180,1)");
-      sunG.addColorStop(0.4, "rgba(255,210,90,0.85)");
-      sunG.addColorStop(1, "rgba(255,180,60,0)");
-      ctx.fillStyle = sunG;
-      ctx.beginPath(); ctx.arc(sunX, sunY, 90, 0, Math.PI * 2); ctx.fill();
-
+      // sky bands above the painted far layer (tall portrait screens)
+      const farBottom = Math.round(vh * 0.8);
+      const farTop = farBottom - IMG.far.height;
+      if (farTop > 0) {
+        const band = Math.ceil(farTop / (SKY.length - 1));
+        for (let i = 0; i < SKY.length - 1; i++) {
+          ctx.fillStyle = SKY[i];
+          ctx.fillRect(-4, i * band - 4, vw + 8, band + 4);
+        }
+        ctx.fillStyle = SKY[SKY.length - 1];
+        ctx.fillRect(-4, (SKY.length - 1) * band - 4, vw + 8, Math.max(0, farTop - (SKY.length - 1) * band) + 8);
+      }
+      tileX(IMG.far, t * 0.06 / ps, farTop);
       drawClouds(0, t);
-      drawRidge(ridges.far, t * 0.18, "#6b7ab8", "#8b96c8", 0);
-      drawCastles(t * 0.4);
-      drawRidge(ridges.mid, t * 0.4, "#3e7a5c", "#4f9a70", 1);
-      drawIslands(t * 0.55);
       drawClouds(1, t);
+      const hillsTop = Math.max(vh - IMG.hills.height, Math.round(vh * 0.72));
+      tileX(IMG.hills, t * 0.45 / ps, hillsTop);
+
+      // the nearest clouds stay behind the action so gems and puffs are always easy to see
+      ctx.globalAlpha = 0.7;
+      drawClouds(2, t);
+      ctx.globalAlpha = 1;
 
       const cam = t;
-      puffs.forEach(function (p) { if (!p.dead) drawPuff(p.x - cam, p.y + Math.sin(p.bob) * 8, p.r, p.bob); });
-      gems.forEach(function (g) { if (!g.taken) drawPickup(g.x - cam, g.y + Math.sin(g.bob) * 5, g); });
       obstacles.forEach(function (o) { drawObstacle(o, o.x - cam); });
+      gems.forEach(function (g) {
+        if (g.taken) return;
+        const name = g.kind === "star" ? "star" : "gem" + (g.hue | 0);
+        sprC(name, g.x - cam, g.y + Math.sin(g.bob) * 5);
+        // a one-pixel twinkle now and then
+        if (Math.sin(g.bob * 2.3) > 0.93) {
+          ctx.fillStyle = "#ffffff";
+          const gx = ax(g.x - cam) - 3, gy = ax(g.y + Math.sin(g.bob) * 5) - 4;
+          ctx.fillRect(gx, gy - 1, 1, 3); ctx.fillRect(gx - 1, gy, 3, 1);
+        }
+      });
+      // monsters on top so they always read clearly
+      const mBase = mode.id === "easy" ? "mE" : "m";
+      puffs.forEach(function (p) {
+        // gloom monsters: quick wing flap, an occasional blink, and a "pop!" face when hit
+        let pose;
+        if (p.dead) pose = "hit";
+        else if (Math.sin(p.bob * 0.9 + p.seed) > 0.96) pose = "blink";
+        else pose = SPR.monster.flap[Math.floor(p.bob * 3.5) % 2];
+        p.frame = mBase + p.v + "_" + pose;
+        const lift = p.dead ? (0.2 - p.popT) * 40 : 0;
+        if (p.dead && Math.floor(p.popT * 30) % 2) return; // flicker while popping
+        sprC(p.frame, p.x - cam, p.y + Math.sin(p.bob) * 8 - lift);
+      });
 
-      drawClouds(2, t);
-      drawRidge(ridges.near, t * 0.75, "#2c5a3a", "#1f3f28", 2);
 
+      dragonFrame = currentDragonFrame();
       if (invuln <= 0 || Math.floor(invuln * 12) % 2 === 0) {
-        drawDragonBody(ctx, dragon.x, dragon.y, 1, dragon.wing, dragon.fire > 0, dragon.vy);
+        const a = SPR.dragon.anchor;
+        spr(dragonFrame, ax(dragon.x + ANCHOR_DX) - Math.round(a[0]), ax(dragon.y + ANCHOR_DY) - Math.round(a[1]));
       }
+      if (dragon.fire > 0) drawFlame();
 
-      if (dragon.fire > 0) drawFlame(dragon.x, dragon.y, dragon.vy, dragon.fire);
-
-      particles.forEach(drawParticle);
-
-      floaters.forEach(function (f) {
-        ctx.globalAlpha = Math.max(0, f.life / 0.8);
-        ctx.fillStyle = f.color;
-        ctx.font = "800 18px Trebuchet MS, sans-serif";
-        ctx.textAlign = "center";
-        ctx.lineJoin = "round";
-        ctx.strokeStyle = "rgba(20,30,50,0.55)";
-        ctx.lineWidth = 4;
-        ctx.strokeText(f.text, f.sx, f.y);
-        ctx.fillText(f.text, f.sx, f.y);
+      particles.forEach(function (p) {
+        const life = p.life / (p.max || 0.5);
+        ctx.globalAlpha = life > 0.45 ? 1 : 0.55;
+        ctx.fillStyle = p.color;
+        const s = Math.max(1, Math.round(p.r / ps));
+        ctx.fillRect(ax(p.x) - (s >> 1), ax(p.y) - (s >> 1), s, s);
       });
       ctx.globalAlpha = 1;
 
-      const haze = ctx.createLinearGradient(0, H * 0.8, 0, H);
-      haze.addColorStop(0, "rgba(255,210,130,0)");
-      haze.addColorStop(1, "rgba(255,190,100,0.18)");
-      ctx.fillStyle = haze;
-      ctx.fillRect(0, H * 0.8, W, H * 0.2);
-
+      if (floaters.length) {
+        ctx.font = '8px "Press Start 2P", monospace';
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        floaters.forEach(function (f) {
+          const x = ax(f.sx), y = ax(f.y);
+          ctx.globalAlpha = f.life > 0.25 ? 1 : 0.5;
+          ctx.fillStyle = "#1a1030";
+          ctx.fillText(f.text, x + 1, y); ctx.fillText(f.text, x - 1, y);
+          ctx.fillText(f.text, x, y + 1); ctx.fillText(f.text, x, y - 1);
+          ctx.fillStyle = f.color;
+          ctx.fillText(f.text, x, y);
+        });
+        ctx.globalAlpha = 1;
+      }
       ctx.restore();
     }
 
     function drawClouds(layer, t) {
-      const par = layer === 0 ? 0.15 : layer === 1 ? 0.28 : 0.5;
+      const par = layer === 0 ? 0.1 : layer === 1 ? 0.18 : 0.3;
       for (let i = 0; i < clouds.length; i++) {
         const c = clouds[i];
         if (c.layer !== layer) continue;
-        drawCloud(c.x - t * par, c.y, c.s, c.a, c.bumps);
+        const name = "cloud" + (c.kind | 0);
+        const f = SPR.frames[name];
+        spr(name, ax(c.x - t * par) - (f.w >> 1), ax(c.y) - (f.h >> 1));
       }
     }
 
-    function drawCloud(x, y, s, a, bumps) {
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.scale(s, s * 0.85);
-      ctx.globalAlpha = a * 0.85;
-      ctx.fillStyle = "#ffffff";
-      ctx.beginPath();
-      ctx.arc(-36, 8, bumps[0], 0, Math.PI * 2);
-      ctx.arc(-6, -6, bumps[1], 0, Math.PI * 2);
-      ctx.arc(28, 4, bumps[2], 0, Math.PI * 2);
-      ctx.arc(48, 12, bumps[3], 0, Math.PI * 2);
-      ctx.arc(8, 16, 30, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.globalAlpha = 1;
-      ctx.restore();
-    }
-
-    function drawRidge(ridge, scroll, col, hilite, trees) {
-      const pts = ridge.pts;
-      if (!pts || !pts.length) return;
-      ctx.beginPath();
-      ctx.moveTo(pts[0].x - scroll, H + 4);
-      for (let i = 0; i < pts.length; i++) {
-        ctx.lineTo(pts[i].x - scroll, pts[i].y * H);
-      }
-      ctx.lineTo(pts[pts.length - 1].x - scroll, H + 4);
-      ctx.closePath();
-      const g = ctx.createLinearGradient(0, H * ridge.base - 80, 0, H);
-      g.addColorStop(0, hilite);
-      g.addColorStop(1, col);
-      ctx.fillStyle = g;
-      ctx.fill();
-      if (trees === 1) {
-        for (let i = 1; i < pts.length; i += 2) {
-          const x = pts[i].x - scroll;
-          if (x < -40 || x > W + 40) continue;
-          const y = pts[i].y * H;
-          ctx.fillStyle = "rgba(20,60,35,0.45)";
-          ctx.beginPath();
-          ctx.moveTo(x, y);
-          ctx.lineTo(x + 7, y);
-          ctx.lineTo(x + 3.5, y - 16);
-          ctx.fill();
-        }
+    // A spire is its painted cap plus a repeated slice of its base, so it can
+    // reach any screen edge. Top spires are the same art flipped vertically.
+    function drawSpireDown(left, top, len) {
+      const f = SPR.frames.spire, T = SPR.spireTile;
+      const capH = Math.min(T[1], len);
+      ctx.drawImage(IMG.sheet, f.x, f.y, f.w, capH, left, top, f.w, capH);
+      const th = T[1] - T[0];
+      for (let y = top + T[1]; y < top + len; y += th) {
+        const h = Math.min(th, top + len - y);
+        ctx.drawImage(IMG.sheet, f.x, f.y + T[0], f.w, h, left, y, f.w, h);
       }
     }
-
-    function drawIslands(scroll) {
-      islands.forEach(function (is) {
-        const x = is.x - scroll;
-        const y = is.y * H;
-        if (x < -200 || x > W + 200) return;
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.fillStyle = "#5c3a22";
-        ctx.beginPath();
-        ctx.ellipse(0, 12, is.w * 0.5, is.h, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = "#4f9a4a";
-        ctx.beginPath();
-        ctx.ellipse(0, 2, is.w * 0.52, is.h * 0.55, 0, Math.PI, 0, true);
-        ctx.fill();
-        if (is.tree) {
-          ctx.fillStyle = "#6b3e1f";
-          ctx.fillRect(-4, -28, 6, 28);
-          ctx.fillStyle = "#2f8a48";
-          ctx.beginPath(); ctx.arc(-2, -36, 16, 0, Math.PI * 2); ctx.fill();
-          ctx.fillStyle = "#3eaa58";
-          ctx.beginPath(); ctx.arc(8, -30, 10, 0, Math.PI * 2); ctx.fill();
-        }
-        if (is.hut) {
-          ctx.fillStyle = "#d9c4a0";
-          ctx.fillRect(12, -18, 22, 16);
-          ctx.fillStyle = "#c45c3a";
-          ctx.beginPath(); ctx.moveTo(8, -18); ctx.lineTo(23, -32); ctx.lineTo(38, -18); ctx.fill();
-        }
-        ctx.restore();
-      });
-    }
-
-    function drawCastles(scroll) {
-      castles.forEach(function (c) {
-        const x = c.x - scroll;
-        if (x < -160 || x > W + 160) return;
-        const y = H * 0.58;
-        ctx.save();
-        ctx.translate(x, y);
-        const w = c.w, h = c.h;
-        ctx.fillStyle = "#d7c2a0";
-        ctx.fillRect(-w / 2, -h, w, h);
-        ctx.fillStyle = "#cbb48a";
-        for (let i = 0; i < 5; i++) {
-          ctx.fillRect(-w / 2 + i * (w / 5), -h - 10, w / 5 - 3, 10);
-        }
-        ctx.fillStyle = "#e6d4b4";
-        ctx.fillRect(-w * 0.15, -h - 40, w * 0.3, 44);
-        ctx.fillStyle = "#b44a3a";
-        ctx.beginPath();
-        ctx.moveTo(-w * 0.2, -h - 40);
-        ctx.lineTo(0, -h - 68);
-        ctx.lineTo(w * 0.2, -h - 40);
-        ctx.fill();
-        ctx.fillStyle = "#5a3a18";
-        ctx.fillRect(-w * 0.28, -h + 20, 8, 14);
-        ctx.fillRect(w * 0.12, -h + 20, 8, 14);
-        ctx.fillRect(-6, -h + 40, 10, 18);
-        ctx.fillStyle = "#e23d3d";
-        ctx.fillRect(2, -h - 62, 3, 22);
-        ctx.beginPath();
-        ctx.moveTo(5, -h - 62);
-        ctx.lineTo(18, -h - 56);
-        ctx.lineTo(5, -h - 50);
-        ctx.fill();
-        ctx.restore();
-      });
-    }
-
     function drawObstacle(o, x) {
-      if (o.type === "rock") {
-        ctx.save();
-        ctx.translate(x, o.y);
-        ctx.fillStyle = "#7a7168";
-        ctx.beginPath();
-        ctx.moveTo(-o.r, 6);
-        ctx.lineTo(-o.r * 0.5, -o.r * 0.85);
-        ctx.lineTo(o.r * 0.15, -o.r);
-        ctx.lineTo(o.r * 0.95, -o.r * 0.4);
-        ctx.lineTo(o.r, o.r * 0.55);
-        ctx.lineTo(-o.r * 0.6, o.r * 0.7);
-        ctx.closePath();
-        ctx.fill();
-        ctx.fillStyle = "rgba(255,255,255,0.18)";
-        ctx.beginPath();
-        ctx.moveTo(-o.r * 0.3, -o.r * 0.5);
-        ctx.lineTo(0, -o.r * 0.85);
-        ctx.lineTo(o.r * 0.2, -o.r * 0.4);
-        ctx.closePath();
-        ctx.fill();
-        ctx.fillStyle = "rgba(70,140,70,0.45)";
-        ctx.beginPath(); ctx.arc(-o.r * 0.2, o.r * 0.3, o.r * 0.35, 0, Math.PI * 2); ctx.fill();
-        ctx.restore();
-        return;
-      }
+      if (o.type === "rock") { sprC(o.big ? "rockL" : "rockS", x, o.y); return; }
       if (o.type === "spire") {
-        const top = o.from === "top" ? -20 : o.y;
-        const bot = o.from === "top" ? o.h : H + 20;
-        const w = o.w;
-        const g = ctx.createLinearGradient(x - w, 0, x + w, 0);
-        g.addColorStop(0, "#6d655c");
-        g.addColorStop(0.45, "#9a9186");
-        g.addColorStop(1, "#5a544c");
-        ctx.fillStyle = g;
-        ctx.beginPath();
-        if (o.from === "top") {
-          ctx.moveTo(x - w * 0.45, top);
-          ctx.lineTo(x + w * 0.45, top);
-          ctx.lineTo(x + w * 0.32, bot);
-          ctx.lineTo(x - w * 0.32, bot);
+        const f = SPR.frames.spire;
+        const left = ax(x) - (f.w >> 1);
+        if (o.from === "bot") {
+          drawSpireDown(left, ax(o.y), canvas.height - ax(o.y) + 8);
         } else {
-          ctx.moveTo(x - w * 0.32, top);
-          ctx.lineTo(x + w * 0.32, top);
-          ctx.lineTo(x + w * 0.5, bot);
-          ctx.lineTo(x - w * 0.5, bot);
+          const tip = ax(o.h);
+          ctx.save();
+          ctx.translate(0, tip);
+          ctx.scale(1, -1);
+          drawSpireDown(left, 0, tip + 8);
+          ctx.restore();
         }
-        ctx.closePath();
-        ctx.fill();
-        ctx.strokeStyle = "rgba(230,190,90,0.55)";
-        ctx.lineWidth = 4;
-        const tipY = o.from === "top" ? bot - 8 : top + 8;
-        ctx.beginPath();
-        ctx.moveTo(x - w * 0.28, tipY);
-        ctx.lineTo(x + w * 0.28, tipY);
-        ctx.stroke();
-        ctx.fillStyle = "rgba(255,230,150,0.35)";
-        const midY = (top + bot) / 2;
-        for (let i = -1; i <= 1; i++) ctx.fillRect(x - 2, midY + i * 18, 4, 8);
         return;
       }
       if (o.type === "ruin") {
-        ctx.save();
-        ctx.translate(x, o.y);
-        ctx.fillStyle = "#c2b49a";
-        ctx.fillRect(-o.w / 2, 0, o.w, o.h);
-        ctx.fillStyle = "#a89878";
-        ctx.fillRect(-o.w / 2, 0, o.w, 8);
-        ctx.fillStyle = "#4a3820";
-        ctx.fillRect(-6, o.h * 0.35, 10, 16);
-        ctx.fillStyle = "#b44a3a";
-        ctx.beginPath();
-        ctx.moveTo(-o.w / 2 - 4, 0);
-        ctx.lineTo(0, -18);
-        ctx.lineTo(o.w / 2 + 4, 0);
-        ctx.fill();
-        ctx.restore();
+        const n = o.big ? "tower" : "towerS";
+        const f = SPR.frames[n];
+        spr(n, ax(x) - (f.w >> 1), ax(o.y) - SPR.towerRoof[n]);
       }
     }
 
-    function drawPickup(x, y, g) {
-      ctx.save();
-      ctx.translate(x, y);
-      const pulse = 1 + Math.sin(g.bob * 2) * 0.08;
-      ctx.scale(pulse, pulse);
-      if (g.kind === "star") {
-        ctx.rotate(g.bob * 0.2);
-        ctx.fillStyle = "#ffe08a";
-        ctx.strokeStyle = "#e09a20";
-        ctx.lineWidth = 2;
-        starPath(0, 0, 5, g.r, g.r * 0.45);
-        ctx.fill(); ctx.stroke();
-        ctx.fillStyle = "rgba(255,255,255,0.7)";
-        ctx.beginPath(); ctx.arc(-3, -3, 3, 0, Math.PI * 2); ctx.fill();
-      } else {
-        const cols = [
-          ["#7fe3ff", "#1a7aad"],
-          ["#ff8ad8", "#b0277a"],
-          ["#7dff9a", "#1d8a48"]
-        ][g.hue] || ["#7fe3ff", "#1a7aad"];
-        ctx.rotate(0.4);
-        const grd = ctx.createLinearGradient(-g.r, -g.r, g.r, g.r);
-        grd.addColorStop(0, "#fff");
-        grd.addColorStop(0.25, cols[0]);
-        grd.addColorStop(1, cols[1]);
-        ctx.fillStyle = grd;
-        ctx.beginPath();
-        ctx.moveTo(0, -g.r);
-        ctx.lineTo(g.r * 0.85, 0);
-        ctx.lineTo(0, g.r);
-        ctx.lineTo(-g.r * 0.85, 0);
-        ctx.closePath();
-        ctx.fill();
-        ctx.fillStyle = "rgba(255,255,255,0.8)";
-        ctx.beginPath(); ctx.arc(-g.r * 0.25, -g.r * 0.25, g.r * 0.22, 0, Math.PI * 2); ctx.fill();
-      }
-      ctx.restore();
-    }
-
-    function starPath(x, y, n, r, ir) {
-      ctx.beginPath();
-      for (let i = 0; i < n * 2; i++) {
-        const ang = -Math.PI / 2 + i * Math.PI / n;
-        const rad = i % 2 === 0 ? r : ir;
-        const px = x + Math.cos(ang) * rad;
-        const py = y + Math.sin(ang) * rad;
-        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-      }
-      ctx.closePath();
-    }
-
-    function drawPuff(x, y, r, bob) {
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.globalAlpha = 0.92;
-      const g = ctx.createRadialGradient(-r * 0.2, -r * 0.25, 4, 0, 0, r * 1.15);
-      g.addColorStop(0, "#d4b8ff");
-      g.addColorStop(0.45, "#7a4cb0");
-      g.addColorStop(1, "#3a2268");
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.arc(-r * 0.35, 0, r * 0.7, 0, Math.PI * 2);
-      ctx.arc(r * 0.3, r * 0.1, r * 0.75, 0, Math.PI * 2);
-      ctx.arc(0, -r * 0.35, r * 0.65, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = "#1a1028";
-      const ey = -2 + Math.sin(bob) * 1;
-      ctx.beginPath(); ctx.arc(-8, ey, 3.2, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(8, ey, 3.2, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = "#1a1028";
-      ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(0, 8, 6, 0.15 * Math.PI, 0.85 * Math.PI); ctx.stroke();
-      ctx.restore();
-    }
-
-    function drawFlame(x, y, vy, t) {
-      const ang = Math.atan2(vy, 220);
-      ctx.save();
-      ctx.translate(x + 50, y + 6);
-      ctx.rotate(ang);
-      const len = 120 * (t / 0.28);
-      const grd = ctx.createLinearGradient(0, 0, len, 0);
-      grd.addColorStop(0, "rgba(255,255,220,0.9)");
-      grd.addColorStop(0.35, "rgba(255,180,40,0.75)");
-      grd.addColorStop(1, "rgba(255,80,0,0)");
-      ctx.fillStyle = grd;
-      ctx.beginPath();
-      ctx.moveTo(0, -8);
-      ctx.quadraticCurveTo(len * 0.5, -22, len, 0);
-      ctx.quadraticCurveTo(len * 0.5, 22, 0, 8);
-      ctx.fill();
-      ctx.restore();
-    }
-
-    function drawParticle(p) {
-      ctx.globalAlpha = Math.max(0, p.life / (p.max || 0.5));
-      ctx.fillStyle = p.color;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.globalAlpha = 1;
-    }
-
-    function drawDragonBody(g, x, y, scale, wing, firing, vy) {
-      g.save();
-      g.translate(x, y);
-      g.scale(scale, scale);
-      const tilt = clamp((vy || 0) * 0.0018, -0.55, 0.55);
-      g.rotate(tilt);
-      const flap = Math.sin(wing);
-      const flap2 = Math.sin(wing + 0.4);
-
-      g.strokeStyle = "#15724c";
-      g.lineWidth = 14;
-      g.lineCap = "round";
-      g.beginPath();
-      g.moveTo(-28, 10);
-      g.quadraticCurveTo(-60, 18 + flap2 * 10, -88, 8 + flap * 14);
-      g.stroke();
-      g.fillStyle = "#e07a20";
-      g.beginPath();
-      const tx = -88, ty = 8 + flap * 14;
-      g.moveTo(tx, ty);
-      g.lineTo(tx - 16, ty - 10);
-      g.lineTo(tx - 8, ty);
-      g.lineTo(tx - 16, ty + 10);
-      g.closePath();
-      g.fill();
-
-      drawWing(g, flap, true);
-
-      g.fillStyle = "#1b8a58";
-      g.beginPath();
-      g.ellipse(0, 6, 34, 20, -0.15, 0, Math.PI * 2);
-      g.fill();
-      g.fillStyle = "#c6ef7a";
-      g.beginPath();
-      g.ellipse(4, 14, 22, 11, -0.15, 0, Math.PI * 2);
-      g.fill();
-
-      g.fillStyle = "#15724c";
-      g.beginPath();
-      g.ellipse(-10, 22, 8, 6, 0.2, 0, Math.PI * 2);
-      g.fill();
-
-      g.fillStyle = "#1b8a58";
-      g.beginPath();
-      g.ellipse(28, -2, 14, 11, 0.3, 0, Math.PI * 2);
-      g.fill();
-      g.beginPath();
-      g.ellipse(46, -6, 18, 13, 0.05, 0, Math.PI * 2);
-      g.fill();
-      g.beginPath();
-      g.ellipse(62, -2, 12, 8, 0.1, 0, Math.PI * 2);
-      g.fill();
-      g.fillStyle = "#c6ef7a";
-      g.beginPath();
-      g.ellipse(60, 2, 8, 5, 0.1, 0, Math.PI * 2);
-      g.fill();
-
-      g.fillStyle = "#ffd25a";
-      g.beginPath();
-      g.moveTo(40, -16);
-      g.quadraticCurveTo(38, -32, 48, -38);
-      g.quadraticCurveTo(46, -24, 50, -14);
-      g.closePath();
-      g.fill();
-      g.beginPath();
-      g.moveTo(48, -14);
-      g.quadraticCurveTo(52, -26, 60, -28);
-      g.quadraticCurveTo(54, -18, 56, -10);
-      g.closePath();
-      g.fill();
-
-      g.fillStyle = "#e07a20";
-      g.beginPath();
-      g.moveTo(34, -10);
-      g.lineTo(24, -22);
-      g.lineTo(38, -6);
-      g.fill();
-
-      if (dragon.blink > 0) {
-        g.strokeStyle = "#1a1a1a";
-        g.lineWidth = 2;
-        g.beginPath(); g.moveTo(50, -8); g.lineTo(58, -8); g.stroke();
-      } else {
-        g.fillStyle = "#fff";
-        g.beginPath(); g.ellipse(54, -8, 6, 6.2, 0, 0, Math.PI * 2); g.fill();
-        g.fillStyle = "#2a1a08";
-        g.beginPath(); g.arc(56, -8, 3.1, 0, Math.PI * 2); g.fill();
-        g.fillStyle = "#fff";
-        g.beginPath(); g.arc(57.5, -9.5, 1.3, 0, Math.PI * 2); g.fill();
-      }
-
-      g.strokeStyle = "#0e4a30";
-      g.lineWidth = 1.6;
-      g.beginPath();
-      g.arc(64, 0, 5, 0.1, Math.PI * 0.7);
-      g.stroke();
-      g.fillStyle = "#0e4a30";
-      g.beginPath(); g.arc(68, -4, 1.4, 0, Math.PI * 2); g.fill();
-
-      g.fillStyle = "#15724c";
-      g.beginPath();
-      g.ellipse(16, 24, 8, 6, -0.2, 0, Math.PI * 2);
-      g.fill();
-
-      g.fillStyle = "#7a3c18";
-      g.beginPath();
-      g.ellipse(-2, -2, 16, 7, -0.15, 0, Math.PI * 2);
-      g.fill();
-
-      g.save();
-      g.translate(-4, -16);
-      g.strokeStyle = "#e23d3d";
-      g.lineWidth = 4;
-      g.lineCap = "round";
-      g.beginPath();
-      g.moveTo(4, 6);
-      g.quadraticCurveTo(-16, 8 + flap * 4, -28, 4 + flap2 * 8);
-      g.stroke();
-      g.fillStyle = "#3d6ad8";
-      g.beginPath(); g.ellipse(0, 6, 8, 9, 0, 0, Math.PI * 2); g.fill();
-      g.fillStyle = "#f0c8a0";
-      g.beginPath(); g.arc(2, -6, 7, 0, Math.PI * 2); g.fill();
-      g.fillStyle = "#c5ced8";
-      g.beginPath(); g.arc(2, -8, 7.2, Math.PI, 0); g.fill();
-      g.fillStyle = "#ffd25a";
-      g.beginPath(); g.arc(2, -16, 2.4, 0, Math.PI * 2); g.fill();
-      g.fillStyle = "#4a2c14";
-      g.beginPath(); g.arc(-3, -6, 2.4, 0, Math.PI * 2); g.fill();
-      g.fillStyle = "#2a1a08";
-      g.beginPath(); g.arc(5, -6, 1.2, 0, Math.PI * 2); g.fill();
-      g.restore();
-
-      drawWing(g, flap, false);
-      g.restore();
-    }
-
-    function drawWing(g, flap, back) {
-      g.save();
-      const lift = back ? -20 : 8;
-      g.translate(back ? -8 : 6, back ? -4 : -2);
-      g.rotate(-0.55 + flap * (back ? 0.45 : 0.6));
-      g.fillStyle = back ? "#d46a32" : "#ff8a4a";
-      g.beginPath();
-      g.moveTo(0, 0);
-      g.quadraticCurveTo(20, lift - 10, 52, lift + 6);
-      g.quadraticCurveTo(32, lift + 22, 18, 16);
-      g.quadraticCurveTo(8, 10, 0, 6);
-      g.closePath();
-      g.fill();
-      g.strokeStyle = "#9a3c14";
-      g.lineWidth = 2.2;
-      g.beginPath(); g.moveTo(0, 0); g.lineTo(52, lift + 6); g.stroke();
-      g.beginPath(); g.moveTo(0, 2); g.lineTo(34, lift + 16); g.stroke();
-      g.beginPath(); g.moveTo(0, 4); g.lineTo(18, 16); g.stroke();
-      g.restore();
+    function drawFlame() {
+      // the blast head bursts out of the mouth and the stream stretches behind it
+      const f = SPR.frames.flame;
+      const grow = clamp((0.28 - dragon.fire) / 0.09, 0.35, 1);
+      const len = Math.max(8, Math.round(f.w * grow));
+      const mx = ax(dragon.x + MOUTH_DX);
+      const my = ax(dragon.y + MOUTH_DY) - (f.h >> 1) + (Math.floor(dragon.fire * 40) % 2);
+      ctx.drawImage(IMG.sheet, f.x + f.w - len, f.y, len, f.h, mx, my, len, f.h);
     }
 
     /* ---------- Loop ---------- */
@@ -1931,7 +1698,16 @@
       resize();
       dragon.y = H * 0.5;
       lastT = 0;
+      if (document.fonts && document.fonts.load) document.fonts.load('8px "Press Start 2P"').catch(function () {});
       requestAnimationFrame(frame);
+      // offline play: service worker scoped to emberwing/ only
+      if ("serviceWorker" in navigator && location.protocol !== "file:") {
+        window.addEventListener("load", function () {
+          var scope = new URL("./", location.href);
+          if (!/\/emberwing\/$/.test(scope.pathname)) scope = new URL("emberwing/", scope);
+          navigator.serviceWorker.register(new URL("sw.js", scope).href, { scope: scope.href }).catch(function () {});
+        });
+      }
     }
 
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);

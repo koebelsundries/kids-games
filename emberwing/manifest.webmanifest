@@ -2,13 +2,13 @@
   "id": "./",
   "name": "Emberwing",
   "short_name": "Emberwing",
-  "description": "A dragon-rider flying adventure",
+  "description": "A 16-bit style dragon-rider flying adventure",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#4f8f86",
-  "theme_color": "#1a3a6a",
+  "theme_color": "#197ed2",
   "icons": [
     {
       "src": "../icons/icon-192.png",
