@@ -1899,44 +1899,6 @@ import * as THREE from "./vendor/three.module.min.js";
     }
   }
 
-  function bakeIcon() {
-    const s = 192;
-    const ic = document.createElement("canvas");
-    ic.width = s; ic.height = s;
-    const g = ic.getContext("2d");
-    const grd = g.createLinearGradient(0, 0, 0, s);
-    grd.addColorStop(0, "#4aa4e0");
-    grd.addColorStop(1, "#2f9a58");
-    g.fillStyle = grd;
-    g.fillRect(0, 0, s, s);
-    g.fillStyle = "#3fa84a";
-    g.fillRect(0, s * 0.58, s, s * 0.42);
-    g.fillStyle = "#f6f6f6";
-    g.beginPath(); g.arc(s / 2, s * 0.46, 46, 0, Math.PI * 2); g.fill();
-    g.strokeStyle = "#1a1a1a"; g.lineWidth = 5;
-    g.beginPath(); g.arc(s / 2, s * 0.46, 46, 0, Math.PI * 2); g.stroke();
-    g.fillStyle = "#1a1a1a";
-    g.beginPath(); g.arc(s / 2, s * 0.46, 14, 0, Math.PI * 2); g.fill();
-    g.strokeStyle = "#fff"; g.lineWidth = 4;
-    g.strokeRect(s / 2 - 34, s * 0.72, 68, 28);
-    const url = ic.toDataURL("image/png");
-    $("appleIcon").href = url;
-    const fav = $("favicon");
-    if (fav) fav.href = url;
-    const manifest = {
-      name: "Goalburst",
-      short_name: "Goalburst",
-      display: "standalone",
-      orientation: "any",
-      start_url: ".",
-      scope: ".",
-      background_color: "#1d6b3a",
-      theme_color: "#1d6b3a",
-      icons: [{ src: url, sizes: "192x192", type: "image/png", purpose: "any" }]
-    };
-    const blob = new Blob([JSON.stringify(manifest)], { type: "application/json" });
-    $("manifestLink").href = URL.createObjectURL(blob);
-  }
 
   function resize() {
     dpr = Math.min(window.devicePixelRatio || 1, 1.75);
@@ -2119,7 +2081,6 @@ import * as THREE from "./vendor/three.module.min.js";
 
   updateMuteUI();
   updateHSLabels();
-  bakeIcon();
   bind();
   exportHooks();
   const ok = initThree();

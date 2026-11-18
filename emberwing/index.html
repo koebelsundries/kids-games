@@ -11,9 +11,10 @@
   <meta name="description" content="Emberwing - a cozy dragon-rider flying game" />
   <meta name="format-detection" content="telephone=no" />
   <title>Emberwing</title>
-  <link rel="icon" id="favicon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect fill='%231b4c8c' width='64' height='64' rx='14'/%3E%3Ccircle cx='32' cy='34' r='16' fill='%231b8a58'/%3E%3Cellipse cx='48' cy='30' rx='12' ry='9' fill='%231b8a58'/%3E%3Cpolygon points='44,18 48,6 52,18' fill='%23ffd25a'/%3E%3Cpath d='M20 28 Q4 10 28 22' fill='%23ff8a4a'/%3E%3Ccircle cx='52' cy='28' r='3' fill='%23fff'/%3E%3Ccircle cx='53' cy='28' r='1.5' fill='%23222'/%3E%3C/svg%3E" />
-  <link rel="manifest" id="manifestLink" />
-  <link rel="apple-touch-icon" id="appleIcon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect fill='%231b4c8c' width='64' height='64' rx='14'/%3E%3Ccircle cx='32' cy='34' r='16' fill='%231b8a58'/%3E%3Cellipse cx='48' cy='30' rx='12' ry='9' fill='%231b8a58'/%3E%3Cpolygon points='44,18 48,6 52,18' fill='%23ffd25a'/%3E%3Cpath d='M20 28 Q4 10 28 22' fill='%23ff8a4a'/%3E%3Ccircle cx='52' cy='28' r='3' fill='%23fff'/%3E%3Ccircle cx='53' cy='28' r='1.5' fill='%23222'/%3E%3C/svg%3E" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png" />
+  <link rel="icon" href="../icons/favicon.ico" sizes="48x48" />
+  <link rel="apple-touch-icon" sizes="180x180" href="../icons/apple-touch-icon.png" />
   <style>
     :root { --safe-t: env(safe-area-inset-top, 0px); --safe-b: env(safe-area-inset-bottom, 0px); --safe-l: env(safe-area-inset-left, 0px); --safe-r: env(safe-area-inset-right, 0px); }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
@@ -543,39 +544,6 @@
     }
 
     /* ---------- Icons / manifest ---------- */
-    function bakeIcon() {
-      const s = 192;
-      const ic = document.createElement("canvas");
-      ic.width = s; ic.height = s;
-      const g = ic.getContext("2d");
-      const grd = g.createLinearGradient(0, 0, 0, s);
-      grd.addColorStop(0, "#4aa4e0");
-      grd.addColorStop(1, "#f7c56a");
-      g.fillStyle = grd;
-      g.fillRect(0, 0, s, s);
-      g.translate(s / 2, s / 2 + 8);
-      g.scale(1.35, 1.35);
-      drawDragonBody(g, 0, 0, 0.6, 0, false, 0);
-      const url = ic.toDataURL("image/png");
-      document.getElementById("appleIcon").href = url;
-      const fav = document.getElementById("favicon");
-      if (fav) fav.href = url;
-      const manifest = {
-        name: "Emberwing",
-        short_name: "Emberwing",
-        display: "standalone",
-        orientation: "any",
-        start_url: ".",
-        scope: ".",
-        background_color: "#1a3a6a",
-        theme_color: "#1a3a6a",
-        icons: [
-          { src: url, sizes: "192x192", type: "image/png", purpose: "any" }
-        ]
-      };
-      const blob = new Blob([JSON.stringify(manifest)], { type: "application/json" });
-      document.getElementById("manifestLink").href = URL.createObjectURL(blob);
-    }
 
     /* ---------- Resize ---------- */
     function resize() {
@@ -1961,7 +1929,6 @@
       updateMuteUI();
       refreshHighScores();
       resize();
-      bakeIcon();
       dragon.y = H * 0.5;
       lastT = 0;
       requestAnimationFrame(frame);
