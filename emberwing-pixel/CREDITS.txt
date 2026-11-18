@@ -1,0 +1,28 @@
+Emberwing Pixel - credits
+=========================
+
+Dragon and rider animation
+  Sliced from the reference sprite strip supplied by Donny with the project request
+  (10 frames; 5 used). Processed by our own script: background/halo removal,
+  horizontal flip, alignment on the rider, alpha-weighted downscale, shared
+  40-colour palette, packed into assets/sprites.png (map: assets/sprites.json
+  and assets/sprites.js).
+
+Backgrounds, obstacles, enemies, pickups, fire and clouds
+  Original art generated for this game with an AI image generator, using the
+  dragon strip as the style/palette reference, then cleaned up by script
+  (white removed to transparency, halo trimmed, downscaled with a box filter,
+  palette-reduced without dithering):
+    assets/bg-far.png    Suncrest Vale sky, sun and far mountains
+    assets/bg-hills.png  near hills, pines, bushes and flowers
+    assets/sprites.png   gloom puff, 3 skygems, star, stone spire, mossy
+                         boulder (2 sizes), watchtower (2 sizes), fire blast,
+                         4 clouds
+
+Font
+  Press Start 2P by CodeMan38 (cody@zone38.net)
+  SIL Open Font License 1.1 - see fonts/OFL.txt
+  Unmodified copy from https://github.com/google/fonts/tree/main/ofl/pressstart2p
+
+No third-party art kits were used. Sound effects are synthesised in the
+browser with WebAudio (no audio files).
