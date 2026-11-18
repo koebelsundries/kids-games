@@ -114,6 +114,15 @@
       display: flex; flex-direction: column; align-items: center; gap: 5px;
       overflow: auto; touch-action: pan-y;
     }
+    .panel-home {
+      position: absolute; top: 0; left: 0; z-index: 2;
+      width: 44px; height: 44px; padding: 0; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; gap: 4px;
+      background: rgba(16, 8, 40, 0.6); border: 2px solid rgba(255,255,255,0.35);
+      color: #fff; font-size: 13px; font-weight: 800; text-decoration: none; pointer-events: auto;
+    }
+    .panel-home .ico { font-size: 20px; }
+    .end-btn.home { background: linear-gradient(180deg, #ffe48a, #f0b429); color: #3a2400; border-color: #fff3c4; }
     .panel-mute {
       position: absolute; top: 0; right: 0;
       width: 36px; height: 36px; font-size: 16px;
@@ -192,6 +201,7 @@
     <div id="hud">
       <div class="hud-end top">
         <div class="icon-row">
+          <button class="icon-btn" id="homeTop" type="button" data-action="pause" aria-label="Leave game menu">🏠</button>
           <button class="icon-btn" id="pauseTop" type="button" data-action="pause" aria-label="Pause">⏸</button>
           <button class="icon-btn mute-btn" id="muteTop" type="button" data-action="mute" aria-label="Mute">🔊</button>
         </div>
@@ -208,6 +218,7 @@
           <div class="sub" id="subBot">First to 7</div>
         </div>
         <div class="icon-row">
+          <button class="icon-btn" id="homeBot" type="button" data-action="pause" aria-label="Leave game menu">🏠</button>
           <button class="icon-btn" id="pauseBot" type="button" data-action="pause" aria-label="Pause">⏸</button>
           <button class="icon-btn mute-btn" id="muteBot" type="button" data-action="mute" aria-label="Mute">🔊</button>
         </div>
@@ -488,7 +499,7 @@
     }
 
     /* ---------- Input ---------- */
-    function isUiButton(el) { return el && el.closest && el.closest("button"); }
+    function isUiButton(el) { return el && el.closest && el.closest("button, a"); }
     function halfOf(y) { return y < H / 2 ? "top" : "bot"; }
     function sideTaken(side) {
       let taken = false;
@@ -582,7 +593,9 @@
     let lastTouchEnd = 0;
     document.addEventListener("touchend", function (e) {
       const now = Date.now();
-      if (now - lastTouchEnd < 300) e.preventDefault();
+      // block double-tap zoom, but never swallow a quick tap on a menu button
+      const onBtn = e.target && e.target.closest && e.target.closest("button, a");
+      if (now - lastTouchEnd < 300 && !onBtn) e.preventDefault();
       lastTouchEnd = now;
     }, { passive: false });
 
@@ -646,8 +659,17 @@
       pauseEl.style.display = "none";
       startMatch();
     }
+    function clearTouches() {
+      touchMap.clear();
+      paddles.top.touchId = null; paddles.bot.touchId = null;
+      mouseOn = false;
+      keys.a = keys.d = keys.left = keys.right = false;
+    }
     function goMenu() {
       state = "menu";
+      clearTouches();
+      particles = [];
+      flashTimer = 0; scoreHold = 0; countTimer = 0;
       paused = false;
       winner = null;
       stopMusic();
@@ -668,6 +690,7 @@
       paused = !paused;
       if (paused) {
         stopMusic();
+        clearTouches();
         pauseEl.style.display = "flex";
         countUi.style.display = "none";
         renderPause();
@@ -1163,6 +1186,7 @@
       return (
         '<div class="panel">' +
         '<button type="button" class="icon-btn mute-btn panel-mute" data-action="mute" aria-label="Mute">🔊</button>' +
+        '<a class="panel-home" href="../" data-action="allgames" aria-label="All games"><span class="ico">🏠</span></a>' +
         '<h1 class="title">SPARKEGG</h1>' +
         '<p class="tag">Keep the dragon egg flying!</p>' +
         '<div class="row">' + modeBtn("2p", "2 Kids") + modeBtn("1p", "vs Nest Keeper") + "</div>" +
@@ -1191,9 +1215,10 @@
         return (
           '<div class="panel">' +
           '<p class="big">Paused</p>' +
-          '<button type="button" class="end-btn primary" data-action="resume">Resume</button>' +
+          '<button type="button" class="end-btn primary" data-action="resume">▶ Keep Playing</button>' +
+          '<button type="button" class="end-btn alt" data-action="menu">🥚 Game Menu</button>' +
+          '<button type="button" class="end-btn home" data-action="allgames">🏠 All Games</button>' +
           '<button type="button" class="end-btn alt" data-action="rematch">Rematch</button>' +
-          '<button type="button" class="end-btn alt" data-action="menu">Home</button>' +
           "</div>"
         );
       };
@@ -1207,14 +1232,21 @@
           '<p class="big">' + (who === "You" ? "You win!" : who === "Nest Keeper" ? "Nest Keeper wins!" : who + " win!") + "</p>" +
           '<p class="result">' + teamName("top") + ' <span>' + scoreTop + "</span> — <span>" + scoreBot + "</span> " + teamName("bot") + "</p>" +
           '<button type="button" class="end-btn primary" data-action="rematch">Rematch</button>' +
-          '<button type="button" class="end-btn alt" data-action="menu">Home</button>' +
+          '<button type="button" class="end-btn alt" data-action="menu">🥚 Game Menu</button>' +
+          '<button type="button" class="end-btn home" data-action="allgames">🏠 All Games</button>' +
           "</div>"
         );
       };
       endEl.innerHTML = overlayShell(body(), body(), "✨");
     }
 
+    function goAllGames() {
+      stopMusic();
+      window.location.href = "../";
+    }
     function onUiClick(e) {
+      const link = e.target.closest && e.target.closest("a[data-action='allgames']");
+      if (link) { e.preventDefault(); goAllGames(); return; }
       const btn = e.target.closest && e.target.closest("button");
       if (!btn) return;
       SFX.unlock();
@@ -1223,6 +1255,7 @@
       if (action === "mute") { SFX.setMuted(!SFX.muted); return; }
       if (action === "start") { startMatch(); return; }
       if (action === "pause") { togglePause(); return; }
+      if (action === "allgames") { goAllGames(); return; }
       if (action === "resume") { togglePause(); return; }
       if (action === "rematch") { rematch(); return; }
       if (action === "menu") { goMenu(); return; }

@@ -32,7 +32,7 @@
     canvas#c { z-index: 0; }
     canvas#fx { z-index: 1; pointer-events: none; }
     #ui { position: fixed; inset: 0; z-index: 2; pointer-events: none; }
-    #ui button, #ui .hit, #touch.active { pointer-events: auto; }
+    #ui button, #ui a, #ui .hit, #touch.active { pointer-events: auto; }
     button {
       font-family: inherit; border: 0; cursor: pointer;
       color: #fff; font-weight: 800; letter-spacing: 0.02em;
@@ -119,6 +119,16 @@
       margin-top: 16px; max-width: 440px; font-size: 13px; font-weight: 700; line-height: 1.45;
       color: #eaf6ff; text-shadow: 0 2px 8px rgba(0,0,0,.7);
     }
+    .home-link {
+      position: absolute; top: calc(10px + var(--safe-t)); left: calc(12px + var(--safe-l));
+      min-height: 44px; padding: 0 14px; border-radius: 999px; display: flex; align-items: center; gap: 6px;
+      background: rgba(8, 28, 16, 0.55); border: 2px solid rgba(255,255,255,0.35);
+      color: #fff; font-weight: 800; font-size: 15px; text-decoration: none; backdrop-filter: blur(6px);
+      box-shadow: 0 4px 12px rgba(0,0,0,.25);
+    }
+    .home-link:focus-visible { outline: 3px solid #ffe08a; outline-offset: 3px; }
+    #passHome { position: absolute; top: calc(10px + var(--safe-t)); left: calc(12px + var(--safe-l)); }
+    #pause .pause-sub { font-size: 15px; font-weight: 700; opacity: .9; margin-bottom: 4px; }
     .menu-mute {
       position: absolute; top: calc(10px + var(--safe-t)); right: calc(12px + var(--safe-r));
       pointer-events: auto;
@@ -148,6 +158,7 @@
       box-shadow: 0 5px 0 rgba(0,0,0,.25);
       width: min(320px, 100%);
     }
+    #btn-home { background: linear-gradient(180deg, #ffe48a, #f0b429); color: #3a2400; }
     #btn-start, #btn-again, #btn-ready, #btn-resume { background: linear-gradient(180deg, #ffb347, #e07a20); color: #3a1a00; }
     #btn-back, #btn-menu, #btn-quit { background: linear-gradient(180deg, #5aa7ff, #2a62d4); color: #fff; margin-top: 10px; }
     #endActions, #pauseActions { display: flex; flex-direction: column; gap: 10px; width: min(320px, 100%); margin-top: 16px; align-items: center; }
@@ -222,6 +233,7 @@
 
     <div id="menu">
       <button class="icon-btn menu-mute" id="menuMute" type="button" data-action="mute" aria-label="Mute">🔊</button>
+      <a class="home-link" id="menuHome" href="../" aria-label="All games">🏠 All Games</a>
       <h1 class="title">GOALBURST</h1>
       <div class="tag">A 3D penalty-kick showdown</div>
       <div class="modes">
@@ -291,6 +303,7 @@
       </div>
       <div class="hud-right">
         <div id="iconBtns">
+          <button class="icon-btn" id="homeBtn" type="button" data-action="home" aria-label="Leave game menu">🏠</button>
           <button class="icon-btn" id="pauseBtn" type="button" data-action="pause" aria-label="Pause">❚❚</button>
           <button class="icon-btn" id="muteBtn" type="button" data-action="mute" aria-label="Mute">🔊</button>
         </div>
@@ -304,6 +317,7 @@
     <div id="toast"></div>
 
     <div id="pass">
+      <button class="icon-btn" id="passHome" type="button" data-action="home" aria-label="Leave game menu">🏠</button>
       <div class="big" id="passTitle">Pass the phone!</div>
       <div class="result" id="passSub"></div>
       <div class="how" id="passHow">Hand it over, then tap when you're ready.</div>
@@ -312,9 +326,11 @@
 
     <div id="pause">
       <div class="big">Paused</div>
+      <div class="pause-sub">Take a break — where to next?</div>
       <div id="pauseActions">
-        <button class="end-btn" id="btn-resume" type="button">Keep playing</button>
-        <button class="end-btn" id="btn-quit" type="button">Quit to menu</button>
+        <button class="end-btn" id="btn-resume" type="button">▶ Keep Playing</button>
+        <button class="end-btn" id="btn-quit" type="button">⚽ Game Menu</button>
+        <button class="end-btn" id="btn-home" type="button">🏠 All Games</button>
       </div>
     </div>
 

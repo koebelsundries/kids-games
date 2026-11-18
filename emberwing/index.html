@@ -28,7 +28,7 @@
     }
     canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; }
     #ui { position: fixed; inset: 0; z-index: 2; pointer-events: none; }
-    #ui button, #ui .hit { pointer-events: auto; }
+    #ui button, #ui a, #ui .hit { pointer-events: auto; }
     button {
       font-family: inherit; border: 0; cursor: pointer;
       color: #fff; font-weight: 800; letter-spacing: 0.02em;
@@ -49,6 +49,11 @@
     #comboPop { position: absolute; left: 50%; top: calc(46px + var(--safe-t)); transform: translateX(-50%); font-weight: 800; font-size: 16px; color: #ffe08a; text-shadow: 0 2px 6px rgba(0,0,0,.5); opacity: 0; transition: opacity .2s; }
 
     #iconBtns { display: flex; gap: 8px; }
+    @media (max-width: 520px) {
+      /* narrow phones: drop the hearts/mode label below the 🏠 ❚❚ 🔊 buttons so nothing overlaps */
+      #hearts { top: calc(62px + var(--safe-t)); font-size: 20px; }
+      #comboPop { top: calc(92px + var(--safe-t)); }
+    }
     .icon-btn {
       width: 44px; height: 44px; border-radius: 50%;
       background: rgba(12, 28, 54, 0.55); border: 2px solid rgba(255,255,255,0.35);
@@ -86,6 +91,32 @@
       text-align: center; overflow: auto; touch-action: pan-y;
     }
     #end { display: none; background: rgba(8,18,40,0.55); }
+    #pauseMenu {
+      position: absolute; inset: 0; z-index: 5; display: none;
+      flex-direction: column; align-items: center; justify-content: center; text-align: center;
+      padding: calc(16px + var(--safe-t)) 20px calc(20px + var(--safe-b));
+      background: rgba(8,18,40,0.62);
+    }
+    #pauseMenu .big { font-size: clamp(34px, 9vw, 52px); font-weight: 900; color: #fff4c8; text-shadow: 0 3px 0 #9a3c0a, 0 8px 18px rgba(0,0,0,.45); }
+    #pauseMenu .pause-sub { font-size: 15px; font-weight: 700; margin: 4px 0 6px; text-shadow: 0 2px 8px rgba(0,0,0,.6); }
+    #pauseActions { display: flex; flex-direction: column; gap: 10px; width: min(320px, 100%); margin-top: 10px; }
+    #btn-resume { background: linear-gradient(180deg, #ffb347, #e07a20); color: #3a1a00; }
+    #btn-pmenu { background: linear-gradient(180deg, #5aa7ff, #2a62d4); }
+    #btn-allgames, #btn-endall { background: linear-gradient(180deg, #6ad08a, #2f9a58); }
+    .home-link {
+      position: absolute; top: calc(10px + var(--safe-t)); left: calc(12px + var(--safe-l));
+      min-height: 44px; padding: 0 14px; border-radius: 999px; display: flex; align-items: center; gap: 6px;
+      background: rgba(12, 28, 54, 0.55); border: 2px solid rgba(255,255,255,0.35);
+      color: #fff; font-weight: 800; font-size: 15px; text-decoration: none; backdrop-filter: blur(6px);
+      box-shadow: 0 4px 12px rgba(0,0,0,.25); pointer-events: auto;
+    }
+    .home-link:focus-visible { outline: 3px solid #ffe08a; outline-offset: 3px; }
+    @media (max-height: 500px) {
+      #pauseMenu .big { font-size: 30px; }
+      #pauseMenu .pause-sub { display: none; }
+      #pauseActions { gap: 8px; margin-top: 6px; }
+      #pauseActions .end-btn { padding: 10px 14px; font-size: 17px; }
+    }
     .title {
       font-size: clamp(42px, 12vw, 76px); font-weight: 900; margin: 0;
       color: #fff4c8; letter-spacing: 0.04em;
@@ -175,6 +206,7 @@
   <div id="ui">
     <div id="menu">
       <button class="icon-btn menu-mute" id="menuMute" type="button" data-action="mute" aria-label="Mute">🔊</button>
+      <a class="home-link" id="menuHome" href="../" aria-label="All games">🏠 All Games</a>
       <h1 class="title">EMBERWING</h1>
       <div class="tag">A dragon-rider adventure</div>
       <div class="modes">
@@ -215,6 +247,7 @@
       <div id="comboPop"></div>
       <div class="hud-right">
         <div id="iconBtns">
+          <button class="icon-btn" id="homeBtn" type="button" data-action="home" aria-label="Leave game menu">🏠</button>
           <button class="icon-btn" id="pauseBtn" type="button" data-action="pause" aria-label="Pause">❚❚</button>
           <button class="icon-btn" id="muteBtn" type="button" data-action="mute" aria-label="Mute">🔊</button>
         </div>
@@ -235,6 +268,17 @@
       <div id="endActions">
         <button class="end-btn" id="btn-again" type="button" data-action="again">Ride again</button>
         <button class="end-btn" id="btn-menu" type="button" data-action="menu">Choose a ride</button>
+        <button class="end-btn" id="btn-endall" type="button" data-action="allgames">🏠 All Games</button>
+      </div>
+    </div>
+
+    <div id="pauseMenu" role="dialog" aria-label="Paused">
+      <div class="big">Paused</div>
+      <div class="pause-sub">Take a break — where to next?</div>
+      <div id="pauseActions">
+        <button class="end-btn" id="btn-resume" type="button">▶ Keep Playing</button>
+        <button class="end-btn" id="btn-pmenu" type="button">🐉 Game Menu</button>
+        <button class="end-btn" id="btn-allgames" type="button">🏠 All Games</button>
       </div>
     </div>
   </div>
@@ -317,6 +361,7 @@
     let cdShown = 0;          // number currently on screen
     let flyTimer = 0;         // how long "Fly!" stays up after play begins
     const cdEl = document.getElementById("countdown");
+    const pauseMenuEl = document.getElementById("pauseMenu");
     const cdNum = document.getElementById("cdNum");
     const cdTip = document.getElementById("cdTip");
     let testNoDamage = false; // only ever set by the ?test hook
@@ -644,7 +689,9 @@
     let lastTouchEnd = 0;
     document.addEventListener("touchend", function (e) {
       const now = Date.now();
-      if (now - lastTouchEnd < 300) e.preventDefault();
+      // block double-tap zoom, but never swallow a quick tap on a menu button
+      const onBtn = e.target && e.target.closest && e.target.closest("button, a");
+      if (now - lastTouchEnd < 300 && !onBtn) e.preventDefault();
       lastTouchEnd = now;
     }, { passive: false });
 
@@ -671,6 +718,17 @@
       if (state === "play") pauseGame();
       else if (state === "paused") resumeGame();
     });
+    // 🏠 opens the same pause menu (Keep Playing / Game Menu / All Games)
+    document.getElementById("homeBtn").addEventListener("click", function (e) {
+      e.stopPropagation();
+      SFX.unlock();
+      if (state === "play") pauseGame();
+    });
+    document.getElementById("btn-resume").addEventListener("click", function (e) { e.stopPropagation(); resumeGame(); });
+    document.getElementById("btn-pmenu").addEventListener("click", function (e) { e.stopPropagation(); showMenu(); });
+    function goAllGames() { stopMusic(); window.location.href = "../"; }
+    document.getElementById("btn-allgames").addEventListener("click", function (e) { e.stopPropagation(); goAllGames(); });
+    document.getElementById("btn-endall").addEventListener("click", function (e) { e.stopPropagation(); goAllGames(); });
     document.getElementById("btn-again").addEventListener("click", function () {
       SFX.unlock();
       startGame(mode.id);
@@ -694,6 +752,13 @@
     function showMenu() {
       state = "menu";
       stopMusic();
+      pauseMenuEl.style.display = "none";
+      hideCountdown(); cdEl.style.visibility = "";
+      input.pointer = false; input.up = false; input.down = false; input.fire = false; input.fireKey = false; input.fireQueued = false;
+      input.ids.clear(); input.firePtrs.clear(); refreshFire();
+      gems = []; obstacles = []; puffs = []; particles = []; floaters = [];
+      toastTimer = 0; shake = 0;
+      document.getElementById("pauseBtn").textContent = "❚❚";
       menuEl.style.display = "flex";
       endEl.style.display = "none";
       hudEl.style.display = "none";
@@ -785,7 +850,11 @@
       state = "paused";
       stopMusic();
       if (countdown > 0 || flyTimer > 0) cdEl.style.visibility = "hidden";
-      showToast("Paused\nTap play or press P", 99);
+      toastEl.classList.remove("show");
+      // drop any held fingers/keys so nothing is "stuck" after resuming
+      input.pointer = false; input.up = false; input.down = false; input.fire = false; input.fireKey = false; input.fireQueued = false;
+      input.ids.clear(); input.firePtrs.clear(); refreshFire();
+      pauseMenuEl.style.display = "flex";
       document.getElementById("pauseBtn").textContent = "▶";
     }
     function resumeGame() {
@@ -794,6 +863,7 @@
       lastT = 0;
       toastEl.classList.remove("show");
       toastTimer = 0;
+      pauseMenuEl.style.display = "none";
       cdEl.style.visibility = "";
       if (countdown <= 0) startMusic(); // mid-game resume: no new countdown
       document.getElementById("pauseBtn").textContent = "❚❚";

@@ -1542,6 +1542,12 @@ import * as THREE from "./vendor/three.module.min.js";
     touchEl.classList.remove("active");
     setHint("");
     toastEl.classList.remove("show");
+    toastTimer = 0;
+    resultHold = 0;
+    confetti = [];
+    aim.down = false; aim.id = null;
+    powerWrap.classList.remove("show");
+    $("pauseBtn").textContent = "❚❚";
     if (pathLine) pathLine.visible = false;
     updateHSLabels();
     camMode = "kick";
@@ -1821,8 +1827,9 @@ import * as THREE from "./vendor/three.module.min.js";
   }
 
   function pauseGame() {
-    if (state === "menu" || state === "teams" || state === "end" || state === "pass") return;
+    if (state === "menu" || state === "teams" || state === "end") return;
     if (paused) return;
+    if (aim.down) { aim.down = false; aim.id = null; powerWrap.classList.remove("show"); }
     paused = true;
     prevState = state;
     state = "paused";
@@ -2031,6 +2038,15 @@ import * as THREE from "./vendor/three.module.min.js";
     });
     $("btn-resume").addEventListener("click", resumeGame);
     $("btn-quit").addEventListener("click", function () { paused = false; pauseEl.style.display = "none"; showMenu(); });
+    $("btn-home").addEventListener("click", function () { stopMusic(); window.location.href = "../"; });
+    ["homeBtn", "passHome"].forEach(function (id) {
+      $(id).addEventListener("pointerdown", function (e) { e.stopPropagation(); });
+      $(id).addEventListener("click", function (e) {
+        e.stopPropagation();
+        SFX.unlock();
+        if (!paused) pauseGame();
+      });
+    });
     $("btn-again").addEventListener("click", function () { SFX.unlock(); startMatch(); });
     $("btn-menu").addEventListener("click", showMenu);
     $("btn-start").addEventListener("click", function () { SFX.unlock(); confirmTeams(); });
@@ -2052,7 +2068,9 @@ import * as THREE from "./vendor/three.module.min.js";
     let lastTouchEnd = 0;
     document.addEventListener("touchend", function (e) {
       const now = Date.now();
-      if (now - lastTouchEnd < 300) e.preventDefault();
+      // block double-tap zoom, but never swallow a quick tap on a menu button
+      const onBtn = e.target && e.target.closest && e.target.closest("button, a");
+      if (now - lastTouchEnd < 300 && !onBtn) e.preventDefault();
       lastTouchEnd = now;
     }, { passive: false });
 
