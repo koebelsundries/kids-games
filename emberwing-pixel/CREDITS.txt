@@ -5,7 +5,8 @@ Dragon and rider animation
   Sliced from the reference sprite strip supplied by Donny with the project request
   (10 frames; 5 used). Processed by our own script: background/halo removal,
   horizontal flip, alignment on the rider, alpha-weighted downscale, shared
-  40-colour palette, packed into assets/sprites.png (map: assets/sprites.json
+  40-colour palette, then hand-edited at art-pixel size so the legs are tucked back under
+  the belly in flight (px-src/pipeline/legs.py), and packed into assets/sprites.png (map: assets/sprites.json
   and assets/sprites.js).
 
 Backgrounds, obstacles, enemies, pickups, fire and clouds

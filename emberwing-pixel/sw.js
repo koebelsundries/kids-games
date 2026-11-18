@@ -1,5 +1,5 @@
 /* Emberwing Pixel - offline cache. Scope: emberwing-pixel/ only. */
-const CACHE = "emberwing-pixel-v1";
+const CACHE = "emberwing-pixel-v2"; // v2: dragon legs tucked in flight
 const CORE = [
   "./",
   "./index.html",
@@ -22,7 +22,8 @@ const EXTRA = [
 self.addEventListener("install", function (e) {
   e.waitUntil(
     caches.open(CACHE).then(function (c) {
-      return c.addAll(CORE).then(function () {
+      // cache: "reload" skips the browser HTTP cache so a new version always gets fresh files
+      return c.addAll(CORE.map(function (u) { return new Request(u, { cache: "reload" }); })).then(function () {
         return Promise.all(EXTRA.map(function (u) { return c.add(u).catch(function () {}); }));
       });
     }).then(function () { return self.skipWaiting(); })
