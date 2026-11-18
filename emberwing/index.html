@@ -138,6 +138,30 @@
     }
     #toast.show { opacity: 1; }
 
+    #countdown {
+      position: absolute; left: 0; right: 0; top: 27%; transform: translateY(-50%);
+      display: none; flex-direction: column; align-items: center; pointer-events: none; text-align: center;
+    }
+    #cdNum {
+      font-size: clamp(110px, 32vmin, 200px); font-weight: 900; line-height: 1; color: #fff4c8;
+      text-shadow: 0 5px 0 #e07a20, 0 10px 0 #9a3c0a, 0 18px 30px rgba(0,0,0,.45);
+    }
+    #cdNum.go { color: #ffe08a; font-size: clamp(84px, 24vmin, 150px); }
+    #cdNum.pop { animation: cdpop .5s cubic-bezier(.2,1.6,.4,1) both; }
+    #cdNum.out { animation: cdout .7s ease-in both; }
+    @media (max-height: 500px) {
+      #countdown { top: 40%; }
+      #cdNum { font-size: 27vmin; }
+      #cdNum.go { font-size: 22vmin; }
+      #cdTip { margin-top: 8px; font-size: 17px; }
+    }
+    @keyframes cdpop { 0% { transform: scale(.25); opacity: 0; } 60% { transform: scale(1.15); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+    @keyframes cdout { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.6); opacity: 0; } }
+    #cdTip {
+      margin-top: 14px; padding: 0 20px; max-width: 460px; font-size: clamp(16px, 4.4vw, 22px); font-weight: 800;
+      color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,.65); white-space: pre-line;
+    }
+
     @media (min-width: 700px) and (orientation: landscape) {
       .modes { flex-direction: row; width: min(920px, 100%); }
       .mode-btn { flex-direction: column; text-align: center; padding: 16px 12px; flex: 1; }
@@ -201,6 +225,7 @@
     <button id="fireL" class="fire-btn" type="button" data-action="fire" aria-label="Breathe fire (left)"><span class="emoji">🔥</span><span class="lbl">FIRE</span></button>
     <button id="fireR" class="fire-btn" type="button" data-action="fire" aria-label="Breathe fire (right)"><span class="emoji">🔥</span><span class="lbl">FIRE</span></button>
     <div id="toast"></div>
+    <div id="countdown" aria-live="assertive"><div id="cdNum">3</div><div id="cdTip"></div></div>
 
     <div id="end">
       <div class="big" id="endTitle">Nice flying!</div>
@@ -287,6 +312,13 @@
     let fireTimer = 0;
     let autoFireCd = 0;
     let fireCount = 0;
+    const CD_STEP = 0.9;      // seconds per countdown number
+    let countdown = 0;        // >0 while "3, 2, 1" is showing; nothing spawns or scrolls
+    let cdShown = 0;          // number currently on screen
+    let flyTimer = 0;         // how long "Fly!" stays up after play begins
+    const cdEl = document.getElementById("countdown");
+    const cdNum = document.getElementById("cdNum");
+    const cdTip = document.getElementById("cdTip");
     let testNoDamage = false; // only ever set by the ?test hook
     let toastTimer = 0;
     let spawnX = 0;
@@ -421,6 +453,15 @@
         this.envOsc(523, 0.12, "triangle", 0.18);
         this.envOsc(659, 0.12, "triangle", 0.16, 0.1);
         this.envOsc(784, 0.22, "triangle", 0.18, 0.2);
+      },
+      count: function () {
+        this.envOsc(660, 0.16, "triangle", 0.22);
+        this.envOsc(1320, 0.08, "sine", 0.06);
+      },
+      go: function () {
+        this.envOsc(1047, 0.12, "triangle", 0.22);
+        this.envOsc(1319, 0.32, "triangle", 0.22, 0.09);
+        this.envOsc(1568, 0.36, "sine", 0.1, 0.09);
       },
       over: function () {
         this.envOsc(392, 0.18, "triangle", 0.16);
@@ -657,6 +698,7 @@
       endEl.style.display = "none";
       hudEl.style.display = "none";
       showFireBtns(false);
+      hideCountdown(); cdEl.style.visibility = "";
       toastEl.classList.remove("show");
       refreshHighScores();
     }
@@ -683,23 +725,66 @@
       input.pointer = false; input.up = false; input.down = false; input.fire = false; input.fireKey = false;
       input.ids.clear(); input.firePtrs.clear(); refreshFire();
       bootWorld();
-      for (let i = 0; i < 4; i++) spawnAhead();
       updateHUD();
-      SFX.start();
-      startMusic();
+      stopMusic();
       const tips = {
         easy: "Drag to fly, little rider!\n🔥 buttons breathe fire",
         normal: "Drag to steer · hold a 🔥 button to blast gloom puffs!",
         hard: "Steer with one thumb, 🔥 with the other!"
       };
-      showToast(tips[mode.id], 1.6);
+      // Countdown first: the scene shows and the dragon hovers (kids can already
+      // steer), but nothing spawns, scrolls or scores until "Fly!".
+      toastEl.classList.remove("show"); toastTimer = 0;
+      cdTip.textContent = tips[mode.id];
+      countdown = CD_STEP * 3; cdShown = 0; flyTimer = 0;
+      cdEl.style.display = "flex";
+      tickCountdown(0);
       document.getElementById("pauseBtn").textContent = "❚❚";
+    }
+
+    function popCd(text, go) {
+      cdNum.textContent = text;
+      cdNum.classList.toggle("go", !!go);
+      cdNum.classList.remove("pop", "out");
+      void cdNum.offsetWidth; // restart the animation
+      cdNum.classList.add("pop");
+    }
+    function hideCountdown() {
+      countdown = 0; flyTimer = 0; cdShown = 0;
+      cdEl.style.display = "none";
+      cdNum.classList.remove("pop", "out", "go");
+    }
+    function tickCountdown(dt) {
+      if (countdown > 0) {
+        countdown -= dt;
+        if (countdown > 0) {
+          const n = Math.ceil(countdown / CD_STEP - 1e-6);
+          if (n !== cdShown) { cdShown = n; popCd(String(n)); SFX.count(); }
+          return;
+        }
+        // GO!
+        countdown = 0;
+        popCd("Fly!", true);
+        cdTip.textContent = "";
+        SFX.go();
+        flyTimer = 0.8;
+        spawnX = worldX + W * 0.85; // first gems drift in from the right edge
+        spawnAhead();
+        startMusic();
+        return;
+      }
+      if (flyTimer > 0) {
+        flyTimer -= dt;
+        if (flyTimer <= 0.45 && !cdNum.classList.contains("out")) { cdNum.classList.remove("pop"); cdNum.classList.add("out"); }
+        if (flyTimer <= 0) hideCountdown();
+      }
     }
 
     function pauseGame() {
       if (state !== "play") return;
       state = "paused";
       stopMusic();
+      if (countdown > 0 || flyTimer > 0) cdEl.style.visibility = "hidden";
       showToast("Paused\nTap play or press P", 99);
       document.getElementById("pauseBtn").textContent = "▶";
     }
@@ -709,7 +794,8 @@
       lastT = 0;
       toastEl.classList.remove("show");
       toastTimer = 0;
-      startMusic();
+      cdEl.style.visibility = "";
+      if (countdown <= 0) startMusic(); // mid-game resume: no new countdown
       document.getElementById("pauseBtn").textContent = "❚❚";
     }
 
@@ -717,6 +803,7 @@
       state = "end";
       stopMusic();
       showFireBtns(false);
+      hideCountdown(); cdEl.style.visibility = "";
       const prev = getHS(mode.id);
       const best = Math.max(prev, score);
       if (score > prev) setHS(mode.id, score);
@@ -1036,9 +1123,12 @@
       window.__ember = function () {
         return { state: state, mode: mode.id, dragonY: dragon.y, dragonX: dragon.x, H: H, W: W,
           fireCount: fireCount, fire: input.fire, steering: input.pointer, py: input.py,
-          steerIds: Array.from(input.ids.keys()), firePtrs: Array.from(input.firePtrs.keys()) };
+          steerIds: Array.from(input.ids.keys()), firePtrs: Array.from(input.firePtrs.keys()),
+          countdown: countdown, cdText: cdEl.style.display === "none" ? "" : cdNum.textContent, worldX: worldX, score: score,
+          hearts: hearts, gems: gems.length, obstacles: obstacles.length, puffs: puffs.length };
       };
       window.__emberNoDamage = function () { testNoDamage = true; };
+      window.__emberEnd = function () { if (state === "play") endGame(false); };
     }
 
     function update(dt) {
@@ -1060,16 +1150,20 @@
       }
 
       const cfg = mode;
-      const speed = cfg.speed * 120;
-      worldX += speed * dt;
-      extendWorld();
-      spawnAhead();
+      const counting = countdown > 0;
+      if (!counting) {
+        const speed = cfg.speed * 120;
+        worldX += speed * dt;
+        extendWorld();
+        spawnAhead();
+      }
 
       const margin = Math.max(50, H * 0.08);
       let target = null;
       if (input.pointer) target = steerTargetY(input.py, margin);
       if (input.up) target = (target == null ? dragon.y : target) - 240 * dt * 10;
       if (input.down) target = (target == null ? dragon.y : target) + 240 * dt * 10;
+      if (counting && target == null) target = dragon.y; // hover in place while counting down
 
       if (target != null) {
         const desired = clamp(target, margin, H - margin);
@@ -1112,8 +1206,15 @@
       }
 
       if (input.fireQueued || input.fire) {
+        // during the countdown this is just a harmless practice puff of flame
         if (input.fireQueued || fireTimer <= 0) breatheFire();
         input.fireQueued = false;
+      }
+      tickCountdown(dt);
+      if (counting) {
+        // no obstacles, enemies, scrolling, scoring or damage until "Fly!"
+        updateParticles(dt);
+        return;
       }
       if (cfg.autoFire) {
         autoFireCd -= dt;
